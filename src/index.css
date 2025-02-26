@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Calendar mobile optimizations */
+@media (max-width: 640px) {
+  .toastui-calendar-layout {
+    font-size: 0.8rem !important;
+  }
+
+  .toastui-calendar-day-name {
+    padding: 0 !important;
+  }
+
+  .toastui-calendar-time-date-schedule-block {
+    margin-right: 0 !important;
+  }
+
+  .toastui-calendar-day-grid-left {
+    width: 48px !important;
+  }
+
+  .toastui-calendar-timezone-labels {
+    width: 48px !important;
+  }
+
+  .toastui-calendar-timegrid-timezone {
+    width: 48px !important;
+  }
+
+  .toastui-calendar-timegrid-hour {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}

@@ -1,0 +1,294 @@
+import React, { useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
+import { 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle, 
+  Info, 
+  X, 
+  Bell, 
+  Trash2, 
+  Check 
+} from 'lucide-react'
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import useAlertStore, { Alert, AlertType } from '../stores/alertStore'
+import { cn } from '../lib/utils'
+import { format, formatDistanceToNow } from 'date-fns'
+
+// Utility function to format timestamps
+const formatTimestamp = (date: Date) => {
+  const isToday = new Date().toDateString() === new Date(date).toDateString()
+  return isToday 
+    ? `Today at ${format(date, 'h:mm a')}` 
+    : formatDistanceToNow(date, { addSuffix: true })
+}
+
+// Alert icon mapping
+const getAlertIcon = (type: AlertType) => {
+  switch (type) {
+    case 'success': return <CheckCircle2 className="w-5 h-5 text-green-500" />
+    case 'error': return <XCircle className="w-5 h-5 text-red-500" />
+    case 'warning': return <AlertCircle className="w-5 h-5 text-amber-500" />
+    case 'info': default: return <Info className="w-5 h-5 text-blue-500" />
+  }
+}
+
+// Background color mapping for alerts
+const getAlertBackground = (type: AlertType, read: boolean) => {
+  if (read) return 'bg-white'
+  
+  switch (type) {
+    case 'success': return 'bg-green-50'
+    case 'error': return 'bg-red-50'
+    case 'warning': return 'bg-amber-50'
+    case 'info': default: return 'bg-blue-50'
+  }
+}
+
+interface AlertItemProps {
+  alert: Alert
+  onRead: (id: string) => void
+  onRemove: (id: string) => void
+}
+
+const AlertItem: React.FC<AlertItemProps> = ({ alert, onRead, onRemove }) => {
+  const handleClick = () => {
+    if (!alert.read) {
+      onRead(alert.id)
+    }
+  }
+
+  return (
+    <div 
+      className={cn(
+        "relative p-4 border-b last:border-b-0 hover:bg-gray-50 transition-colors cursor-pointer",
+        getAlertBackground(alert.type, alert.read)
+      )}
+      onClick={handleClick}
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 mt-0.5">
+          {getAlertIcon(alert.type)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start">
+            <h3 className={cn(
+              "font-medium",
+              !alert.read && "font-semibold"
+            )}>
+              {alert.title}
+            </h3>
+            <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+              {formatTimestamp(alert.timestamp)}
+            </span>
+          </div>
+          <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+          
+          {alert.actionUrl && alert.actionLabel && (
+            <Link 
+              to={alert.actionUrl} 
+              className="inline-block mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+            >
+              {alert.actionLabel}
+            </Link>
+          )}
+        </div>
+      </div>
+      
+      <button 
+        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+        onClick={(e) => {
+          e.stopPropagation()
+          onRemove(alert.id)
+        }}
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  )
+}
+
+const AlertPopup: React.FC = () => {
+  const isMobile = useMediaQuery('(max-width: 1023px)')
+  const { 
+    alerts, 
+    unreadCount, 
+    isOpen, 
+    toggleOpen, 
+    setOpen,
+    markAsRead,
+    markAllAsRead,
+    removeAlert,
+    clearAllAlerts
+  } = useAlertStore()
+  
+  const popupRef = useRef<HTMLDivElement>(null)
+
+  // Close popup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen, setOpen])
+
+  // Close on ESC key
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscKey)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey)
+    }
+  }, [isOpen, setOpen])
+
+  if (isMobile && isOpen) {
+    // Mobile view: full screen modal
+    return (
+      <div className="fixed inset-0 z-50 overflow-hidden bg-black/50 flex justify-center items-start">
+        <div 
+          ref={popupRef}
+          className="bg-white w-full h-full max-h-full flex flex-col rounded-t-lg mt-12 overflow-hidden"
+        >
+          <div className="flex justify-between items-center border-b px-4 py-3 bg-white sticky top-0 z-10">
+            <div className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-blue-600" />
+              <h2 className="text-lg font-semibold">Notifications</h2>
+              {unreadCount > 0 && (
+                <span className="inline-flex items-center justify-center bg-blue-600 text-white text-xs font-medium rounded-full h-5 min-w-5 px-1.5">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button 
+                  onClick={markAllAsRead}
+                  className="text-sm text-blue-600 flex items-center gap-1"
+                >
+                  <Check className="w-4 h-4" />
+                  <span className="hidden sm:inline">Mark all as read</span>
+                </button>
+              )}
+              <button 
+                onClick={() => setOpen(false)}
+                className="p-1.5 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto">
+            {alerts.length > 0 ? (
+              <>
+                {alerts.map(alert => (
+                  <AlertItem 
+                    key={alert.id} 
+                    alert={alert}
+                    onRead={markAsRead}
+                    onRemove={removeAlert}
+                  />
+                ))}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center p-6 text-gray-500">
+                <Bell className="w-12 h-12 text-gray-300 mb-2" />
+                <p>No notifications</p>
+              </div>
+            )}
+          </div>
+          
+          {alerts.length > 0 && (
+            <div className="border-t px-4 py-3 bg-white sticky bottom-0">
+              <button 
+                onClick={clearAllAlerts}
+                className="text-sm text-red-600 flex items-center gap-1.5 hover:bg-red-50 px-3 py-1.5 rounded-md"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Clear all notifications</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop view: popup dropdown
+  return (
+    <>
+      {isOpen && (
+        <div 
+          ref={popupRef}
+          className="absolute top-12 right-0 w-[400px] max-h-[600px] bg-white rounded-lg shadow-lg border flex flex-col overflow-hidden z-50"
+        >
+          <div className="flex justify-between items-center border-b px-4 py-3 bg-white sticky top-0 z-10">
+            <h2 className="text-lg font-semibold">Notifications</h2>
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button 
+                  onClick={markAllAsRead}
+                  className="text-sm text-blue-600 flex items-center gap-1"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Mark all as read</span>
+                </button>
+              )}
+            </div>
+          </div>
+          
+          <div className="overflow-y-auto max-h-[calc(600px-120px)]">
+            {alerts.length > 0 ? (
+              <>
+                {alerts.map(alert => (
+                  <AlertItem 
+                    key={alert.id} 
+                    alert={alert}
+                    onRead={markAsRead}
+                    onRemove={removeAlert}
+                  />
+                ))}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-40 text-center p-6 text-gray-500">
+                <Bell className="w-10 h-10 text-gray-300 mb-2" />
+                <p>No notifications</p>
+              </div>
+            )}
+          </div>
+          
+          {alerts.length > 0 && (
+            <div className="border-t px-4 py-3 bg-white sticky bottom-0">
+              <button 
+                onClick={clearAllAlerts}
+                className="text-sm text-red-600 flex items-center gap-1.5 hover:bg-red-50 px-3 py-1.5 rounded-md"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Clear all notifications</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
+export default AlertPopup 
