@@ -55,6 +55,7 @@ interface EventFormDialogProps {
   }) => void
   initialDate?: Date
   event?: Event
+  initialFormData?: Partial<Event> | null
 }
 
 const EventFormDialog: React.FC<EventFormDialogProps> = ({
@@ -62,7 +63,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   onClose,
   onSubmit,
   initialDate = new Date(),
-  event
+  event,
+  initialFormData = null
 }) => {
   // Pull calendars from the calendar store
   const { calendars } = useCalendarStore()
@@ -104,7 +106,27 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         } : 'No client data'
       }, null, 2) : 'No event data');
     
-    if (event) {
+    if (initialFormData) {
+      // Use initialFormData if provided (from alerts or other sources)
+      const startDate = getValidDate(initialFormData.start, initialDate)
+      const endDate = getValidDate(initialFormData.end, addMinutes(startDate, 30))
+      
+      const updatedFormData = {
+        title: initialFormData.title || '',
+        description: initialFormData.description || '',
+        start: startDate,
+        end: endDate,
+        calendarId: initialFormData.calendarId || (calendars.length > 0 ? calendars[0].id : 'cal1'),
+        location: initialFormData.location || '',
+        employee: initialFormData.employee || '',
+        clientName: initialFormData.client?.name || '',
+        notes: initialFormData.notes || ''
+      };
+      
+      console.log('Setting form data from initialFormData:', updatedFormData);
+      setFormData(updatedFormData);
+    }
+    else if (event) {
       // Convert dates and ensure they're valid
       const startDate = getValidDate(event.start, initialDate)
       const endDate = getValidDate(event.end, addMinutes(startDate, 30))
@@ -147,7 +169,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         notes: ''
       })
     }
-  }, [event, initialDate, isOpen, calendars])
+  }, [event, initialDate, initialFormData, isOpen, calendars])
 
   useEffect(() => {
     // Inspect DOM elements for employee, client name, and notes

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   CheckCircle2, 
@@ -8,12 +8,16 @@ import {
   X, 
   Bell, 
   Trash2, 
-  Check 
+  Check,
+  Calendar as CalendarIcon
 } from 'lucide-react'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import useAlertStore, { Alert, AlertType } from '../stores/alertStore'
 import { cn } from '../lib/utils'
 import { format, formatDistanceToNow } from 'date-fns'
+import { Button } from './ui/button'
+import useCalendarStore from '../stores/calendarStore'
+import { Event } from '../types'
 
 // Utility function to format timestamps
 const formatTimestamp = (date: Date) => {
@@ -29,6 +33,8 @@ const getAlertIcon = (type: AlertType) => {
     case 'success': return <CheckCircle2 className="w-5 h-5 text-green-500" />
     case 'error': return <XCircle className="w-5 h-5 text-red-500" />
     case 'warning': return <AlertCircle className="w-5 h-5 text-amber-500" />
+    case 'appointment_suggestion': return <CalendarIcon className="w-5 h-5 text-purple-500" />
+    case 'reschedule_request': return <CalendarIcon className="w-5 h-5 text-orange-500" />
     case 'info': default: return <Info className="w-5 h-5 text-blue-500" />
   }
 }
@@ -41,6 +47,8 @@ const getAlertBackground = (type: AlertType, read: boolean) => {
     case 'success': return 'bg-green-50'
     case 'error': return 'bg-red-50'
     case 'warning': return 'bg-amber-50'
+    case 'appointment_suggestion': return 'bg-purple-50'
+    case 'reschedule_request': return 'bg-orange-50'
     case 'info': default: return 'bg-blue-50'
   }
 }
@@ -52,9 +60,154 @@ interface AlertItemProps {
 }
 
 const AlertItem: React.FC<AlertItemProps> = ({ alert, onRead, onRemove }) => {
+  const { addEvent, updateEvent, events } = useCalendarStore()
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  
   const handleClick = () => {
     if (!alert.read) {
       onRead(alert.id)
+    }
+  }
+
+  const handleConfirmAppointment = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    
+    if (!alert.metadata) return
+    
+    const { suggestedStart, suggestedEnd, calendarId, clientName, location, notes, employee } = alert.metadata
+    
+    // Create new event from the suggestion
+    const newEvent: Omit<Event, 'id'> = {
+      title: `Appointment with ${employee || 'Provider'}`,
+      description: alert.message,
+      start: suggestedStart || new Date(),
+      end: suggestedEnd || new Date(Date.now() + 1000 * 60 * 30), // Default 30 min
+      calendarId: calendarId || 'cal1',
+      state: 'busy',
+      location: location || '',
+      employee: employee || '',
+      client: clientName ? { name: clientName } : undefined,
+      notes: notes || ''
+    }
+    
+    // Add the event to the calendar
+    addEvent(newEvent)
+    
+    // Mark this alert as read
+    onRead(alert.id)
+    
+    // Store the event ID in sessionStorage to focus on it when Calendar opens
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('focusEventId', events.length.toString())
+    }
+  }
+
+  const handleConfirmReschedule = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    
+    if (!alert.metadata) return
+    
+    const { eventId, suggestedStart, suggestedEnd } = alert.metadata
+    
+    // Find the existing event to update
+    if (eventId) {
+      const existingEvent = events.find(e => e.id === eventId)
+      
+      if (existingEvent) {
+        // Update the event with new times
+        updateEvent(eventId, {
+          ...existingEvent,
+          start: suggestedStart || existingEvent.start,
+          end: suggestedEnd || existingEvent.end
+        })
+        
+        // Mark this alert as read
+        onRead(alert.id)
+        
+        // Store the event ID in sessionStorage to focus on it when Calendar opens
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem('focusEventId', eventId)
+        }
+      }
+    }
+  }
+
+  const getAlertActions = () => {
+    switch (alert.type) {
+      case 'appointment_suggestion':
+        return (
+          <div className="flex flex-wrap gap-2 mt-3">
+            <Button 
+              onClick={handleConfirmAppointment}
+              size="sm"
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Confirm Appointment
+            </Button>
+            <Link 
+              to="/app/calendar" 
+              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              onClick={(e) => {
+                // Store the suggested times in sessionStorage to pre-fill the event form
+                if (alert.metadata && typeof window !== 'undefined') {
+                  const formData = JSON.stringify({
+                    start: alert.metadata.suggestedStart,
+                    end: alert.metadata.suggestedEnd,
+                    title: `Appointment with ${alert.metadata.employee || 'Provider'}`,
+                    location: alert.metadata.location,
+                    notes: alert.metadata.notes,
+                    clientName: alert.metadata.clientName,
+                    employee: alert.metadata.employee,
+                    calendarId: alert.metadata.calendarId || 'cal1'
+                  })
+                  window.sessionStorage.setItem('newEventData', formData)
+                }
+                
+                onRead(alert.id)
+              }}
+            >
+              View Calendar
+            </Link>
+          </div>
+        )
+      case 'reschedule_request':
+        return (
+          <div className="flex flex-wrap gap-2 mt-3">
+            <Button 
+              onClick={handleConfirmReschedule}
+              size="sm" 
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              Confirm New Time
+            </Button>
+            <Link 
+              to="/app/calendar" 
+              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              onClick={() => {
+                // Focus on the original event in the calendar
+                if (alert.metadata?.eventId && typeof window !== 'undefined') {
+                  window.sessionStorage.setItem('focusEventId', alert.metadata.eventId)
+                }
+                
+                onRead(alert.id)
+              }}
+            >
+              View Calendar
+            </Link>
+          </div>
+        )
+      default:
+        return alert.actionUrl && alert.actionLabel ? (
+          <Link 
+            to={alert.actionUrl} 
+            className="inline-block mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+          >
+            {alert.actionLabel}
+          </Link>
+        ) : null
     }
   }
 
@@ -84,14 +237,28 @@ const AlertItem: React.FC<AlertItemProps> = ({ alert, onRead, onRemove }) => {
           </div>
           <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
           
-          {alert.actionUrl && alert.actionLabel && (
-            <Link 
-              to={alert.actionUrl} 
-              className="inline-block mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
-            >
-              {alert.actionLabel}
-            </Link>
+          {/* Display suggested time for appointment-related alerts */}
+          {(alert.type === 'appointment_suggestion' || alert.type === 'reschedule_request') && alert.metadata && (
+            <div className="text-sm text-gray-700 mt-2 border-l-2 border-gray-300 pl-2">
+              <div>
+                <span className="font-medium">Date: </span>
+                {alert.metadata.suggestedStart && format(new Date(alert.metadata.suggestedStart), 'MMMM d, yyyy')}
+              </div>
+              <div>
+                <span className="font-medium">Time: </span>
+                {alert.metadata.suggestedStart && format(new Date(alert.metadata.suggestedStart), 'h:mm a')} - 
+                {alert.metadata.suggestedEnd && format(new Date(alert.metadata.suggestedEnd), 'h:mm a')}
+              </div>
+              {alert.metadata.location && (
+                <div>
+                  <span className="font-medium">Location: </span>
+                  {alert.metadata.location}
+                </div>
+              )}
+            </div>
           )}
+          
+          {getAlertActions()}
         </div>
       </div>
       

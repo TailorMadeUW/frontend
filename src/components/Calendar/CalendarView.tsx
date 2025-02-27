@@ -9,7 +9,7 @@ import EventViewDialog from './EventViewDialog'
 import { Event } from '../../types'
 import type { EventObject, Options, ViewType } from '@toast-ui/calendar'
 import { Button } from '../ui/button'
-import { Plus, Calendar as CalendarIcon } from 'lucide-react'
+import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 
 type CalendarEvent = Omit<Event, 'id'> & { id?: string }
 
@@ -23,6 +23,10 @@ const CalendarView: React.FC = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [zoomLevel, setZoomLevel] = useState(isMobile ? 0.6 : 1)
+  const [newEventFormData, setNewEventFormData] = useState<Partial<Event> | null>(null)
+  const [currentViewDate, setCurrentViewDate] = useState(new Date())
+  const [currentView, setCurrentView] = useState<ViewType>('week')
 
   // Initialize default calendars when component is mounted
   useEffect(() => {
@@ -58,6 +62,24 @@ const CalendarView: React.FC = () => {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [isMobile])
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 640
+      const extraSmallScreen = window.innerWidth < 380
+      
+      if (mobile) {
+        setZoomLevel(extraSmallScreen ? 0.55 : 0.6)
+      } else {
+        setZoomLevel(1)
+      }
+    }
+    
+    window.addEventListener('resize', handleResize)
+    handleResize() // Call initially to set the correct zoom level
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Set up event handlers when calendar is mounted
   useEffect(() => {
@@ -148,6 +170,11 @@ const CalendarView: React.FC = () => {
         setIsFormDialogOpen(true)
         return false // Prevent default form
       })
+
+      // Update current view date when navigation happens
+      instance.on('dateChange', (eventData: any) => {
+        setCurrentViewDate(new Date(eventData.date))
+      })
     }
   }, [events])
 
@@ -212,6 +239,7 @@ const CalendarView: React.FC = () => {
   const changeView = (viewType: ViewType) => {
     if (calendarRef.current) {
       calendarRef.current.getInstance().changeView(viewType)
+      setCurrentView(viewType)
     }
   }
 
@@ -387,6 +415,48 @@ const CalendarView: React.FC = () => {
     setIsFormDialogOpen(true)
   }
 
+  // Navigate to previous week/month/day
+  const navigatePrevious = () => {
+    if (calendarRef.current) {
+      const instance = calendarRef.current.getInstance()
+      instance.prev()
+    }
+  }
+
+  // Navigate to next week/month/day
+  const navigateNext = () => {
+    if (calendarRef.current) {
+      const instance = calendarRef.current.getInstance()
+      instance.next()
+    }
+  }
+
+  // Navigate to today
+  const navigateToday = () => {
+    if (calendarRef.current) {
+      const instance = calendarRef.current.getInstance()
+      instance.today()
+    }
+  }
+
+  // Handle zoom in/out for calendar on mobile
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.1, 1.5))
+  }
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.1, 0.5))
+  }
+
+  // Format the current date for display
+  const getFormattedViewDate = () => {
+    const options: Intl.DateTimeFormatOptions = { 
+      month: 'long',
+      year: 'numeric'
+    }
+    return new Intl.DateTimeFormat('en-US', options).format(currentViewDate)
+  }
+
   const testScenarios = [
     {
       name: 'Test Error Notification',
@@ -427,18 +497,104 @@ const CalendarView: React.FC = () => {
     <div className="flex flex-col w-full h-full rounded-lg overflow-hidden">
       {/* Header */}
       <div className="flex-none px-4 py-3 border-b">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-          <div className="flex gap-1 sm:gap-2">
-            <Button size="sm" variant="outline" onClick={() => changeView('day')}>Day</Button>
-            <Button size="sm" variant="outline" onClick={() => changeView('week')}>Week</Button>
-            <Button size="sm" variant="outline" onClick={() => changeView('month')}>Month</Button>
+        <div className="flex items-center justify-between gap-2">
+          {/* Date Display */}
+          <div className="text-lg font-medium">
+            {getFormattedViewDate()}
           </div>
-          <div className="flex gap-1 sm:gap-2">
+          
+          {/* Navigation Controls */}
+          <div className="flex items-center gap-1">
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={navigatePrevious}
+              className="p-1 sm:p-2 h-7 w-7"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={navigateToday}
+              className="text-xs px-2 py-1 h-7"
+            >
+              Today
+            </Button>
+            
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={navigateNext}
+              className="p-1 sm:p-2 h-7 w-7"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* View Controls */}
+          <div className="flex overflow-hidden rounded-md">
+            <Button 
+              size="sm" 
+              variant={currentView === 'day' ? 'default' : 'outline'} 
+              onClick={() => changeView('day')}
+              className="rounded-none rounded-l-md"
+            >
+              Day
+            </Button>
+            <Button 
+              size="sm" 
+              variant={currentView === 'week' ? 'default' : 'outline'} 
+              onClick={() => changeView('week')}
+              className="rounded-none border-l-0 border-r-0"
+            >
+              Week
+            </Button>
+            <Button 
+              size="sm" 
+              variant={currentView === 'month' ? 'default' : 'outline'} 
+              onClick={() => changeView('month')}
+              className="rounded-none rounded-r-md"
+            >
+              Month
+            </Button>
+          </div>
+        </div>
+        
+        {/* Secondary Controls */}
+        <div className="flex items-center justify-between mt-2">
+          {/* Mobile Zoom Controls (Left) */}
+          <div className="flex gap-1">
+            {isMobile && (
+              <>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={handleZoomOut}
+                  className="px-2 h-7 min-w-7"
+                >
+                  <span className="text-lg">-</span>
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={handleZoomIn}
+                  className="px-2 h-7 min-w-7"
+                >
+                  <span className="text-lg">+</span>
+                </Button>
+              </>
+            )}
+          </div>
+          
+          {/* Resource/Event Controls (Right) */}
+          <div className="flex gap-1 ml-auto">
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowCalendarManagement(true)}
-              className="text-xs sm:text-sm"
+              className="text-xs sm:text-sm h-7"
             >
               <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               View Calendars
@@ -446,7 +602,7 @@ const CalendarView: React.FC = () => {
             <Button
               size="sm"
               onClick={createNewEvent}
-              className="text-xs sm:text-sm"
+              className="text-xs sm:text-sm h-7"
             >
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               New Event
@@ -456,13 +612,28 @@ const CalendarView: React.FC = () => {
       </div>
 
       {/* Calendar Container */}
-      <div className="flex-1 min-h-0 w-full p-0">
-        <Calendar
-          ref={calendarRef}
-          height="100%"
-          events={formatEvents(events)}
-          {...calendarOptions}
-        />
+      <div 
+        className="flex-1 min-h-0 w-full p-0 overflow-hidden relative flex flex-col" 
+        style={{ 
+          height: 'calc(100vh - 110px)', // Fixed height calculation for all devices
+          minHeight: '600px', // Ensure minimum height
+        }}
+      >
+        <div 
+          className="flex-1 w-full h-full"
+          style={{ 
+            transform: `scale(${zoomLevel})`, 
+            transformOrigin: 'top left',
+            width: isMobile ? `${130 / zoomLevel}%` : '100%',  // Increased width compensation for mobile scaling
+          }}
+        >
+          <Calendar
+            ref={calendarRef}
+            height="100%"
+            events={formatEvents(events)}
+            {...calendarOptions}
+          />
+        </div>
       </div>
 
       {/* Dialogs */}

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { v4 as uuidv4 } from 'uuid'
 
-export type AlertType = 'success' | 'error' | 'info' | 'warning'
+export type AlertType = 'success' | 'error' | 'info' | 'warning' | 'appointment_suggestion' | 'reschedule_request'
 
 export interface Alert {
   id: string
@@ -12,6 +12,16 @@ export interface Alert {
   timestamp: Date
   actionUrl?: string
   actionLabel?: string
+  metadata?: {
+    eventId?: string
+    suggestedStart?: Date
+    suggestedEnd?: Date
+    calendarId?: string
+    clientName?: string
+    location?: string
+    notes?: string
+    employee?: string
+  }
 }
 
 interface AlertState {
@@ -69,9 +79,45 @@ const useAlertStore = create<AlertState>((set) => ({
       type: 'error',
       read: true,
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
+    },
+    // Sample appointment suggestion and reschedule request
+    {
+      id: '5',
+      title: 'Appointment Suggestion',
+      message: 'Dr. Emily Parker suggests an appointment for your annual check-up',
+      type: 'appointment_suggestion',
+      read: false,
+      timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
+      metadata: {
+        suggestedStart: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3 + 1000 * 60 * 60 * 14), // 3 days later at 2pm
+        suggestedEnd: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3 + 1000 * 60 * 60 * 15), // 3 days later at 3pm
+        calendarId: 'cal1',
+        clientName: 'You',
+        employee: 'Dr. Emily Parker',
+        location: 'Main Office - Room 305',
+        notes: 'Annual check-up appointment'
+      }
+    },
+    {
+      id: '6',
+      title: 'Reschedule Request',
+      message: 'Your dentist appointment needs to be rescheduled',
+      type: 'reschedule_request',
+      read: false,
+      timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
+      metadata: {
+        eventId: '123456',
+        suggestedStart: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2 + 1000 * 60 * 60 * 10), // 2 days later at 10am
+        suggestedEnd: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2 + 1000 * 60 * 60 * 11), // 2 days later at 11am
+        calendarId: 'cal1',
+        clientName: 'You',
+        employee: 'Dr. Mark Johnson',
+        location: 'Dental Clinic - Suite 200',
+        notes: 'Regular dental checkup'
+      }
     }
   ],
-  unreadCount: 2,
+  unreadCount: 4,
   isOpen: false,
 
   addAlert: (alert) => set((state) => {

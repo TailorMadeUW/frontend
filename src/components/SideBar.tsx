@@ -48,6 +48,11 @@ const SideBar: React.FC = () => {
     { icon: User, label: 'Profile', path: '/app/profile' },
   ]
 
+  // Extract just the items we want to show in the title bar on mobile
+  const mobileHeaderItems = headerItems.filter(item => 
+    item.label === 'Alerts' || item.label === 'Chats' || item.label === 'Profile'
+  );
+
   const testScenarios = [
     {
       name: 'Test Error Notification',
@@ -86,31 +91,33 @@ const SideBar: React.FC = () => {
           <div className="mt-6 mb-2 px-4 text-sm font-medium text-gray-500">
             Settings & Profile
           </div>
-          {headerItems.map((item) => (
-            <Link 
-              key={item.path}
-              to={item.path}
-              className={cn(
-                'w-full px-4 py-2 flex items-center gap-3 cursor-pointer relative',
-                location.pathname === item.path ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'
-              )}
-              onClick={(e) => {
-                if (item.onClick) {
-                  item.onClick(e);
-                } else {
-                  setIsMobileMenuOpen(false);
-                }
-              }}
-            >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-              {item.badge && (
-                <span className="absolute right-4 bg-red-500 text-white text-xs rounded-full px-1.5 min-w-5 h-5 flex items-center justify-center">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          ))}
+          {headerItems
+            .filter(item => item.label === 'Settings') // Only show Settings in the menu
+            .map((item) => (
+              <Link 
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  'w-full px-4 py-2 flex items-center gap-3 cursor-pointer relative',
+                  location.pathname === item.path ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'
+                )}
+                onClick={(e) => {
+                  if (item.onClick) {
+                    item.onClick(e);
+                  } else {
+                    setIsMobileMenuOpen(false);
+                  }
+                }}
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+                {item.badge && (
+                  <span className="absolute right-4 bg-red-500 text-white text-xs rounded-full px-1.5 min-w-5 h-5 flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
         </>
       )}
 
@@ -144,16 +151,41 @@ const SideBar: React.FC = () => {
       {/* Mobile Navbar and Slide-out Panel */}
       <div className="lg:hidden">
         {/* Top Navbar */}
-        <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b shadow-sm flex items-center px-4 z-20">
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="ml-4 flex items-center gap-2">
-            <img src={TailorMadeLogo} alt="TailorMade Logo" className="w-6 h-6" />
-            <span className="text-lg font-semibold text-blue-600">TailorMade</span>
+        <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b shadow-sm flex items-center justify-between px-4 z-20">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-2">
+              <img src={TailorMadeLogo} alt="TailorMade Logo" className="w-6 h-6" />
+              <span className="text-lg font-semibold text-blue-600">TailorMade</span>
+            </div>
+          </div>
+          
+          {/* Mobile Header Items */}
+          <div className="flex items-center gap-1">
+            {mobileHeaderItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="relative p-2 text-gray-600 hover:text-blue-600 rounded-full transition-colors"
+                onClick={(e) => {
+                  if (item.onClick) {
+                    item.onClick(e);
+                  }
+                }}
+              >
+                <item.icon className="w-5 h-5" />
+                {item.badge && (
+                  <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 bg-red-500 text-white text-xs rounded-full">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
           </div>
         </div>
 

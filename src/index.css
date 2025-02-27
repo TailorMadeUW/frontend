@@ -2,10 +2,294 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Loading screen styles */
+.app-loading-logo {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+}
+
+.loading-fade-out {
+  animation: fadeOut 0.5s forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Force full height on all calendar components */
+.toastui-calendar-layout,
+.toastui-calendar-month,
+.toastui-calendar-week,
+.toastui-calendar-day {
+  height: 100% !important;
+}
+
+/* Mobile title bar optimization */
+@media (max-width: 640px) {
+  /* Make the title bar icons more compact */
+  .fixed.top-0.h-16 {
+    height: 56px !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  .fixed.top-0.h-16 button,
+  .fixed.top-0.h-16 a {
+    padding: 0.35rem !important;
+  }
+  
+  .fixed.top-0.h-16 svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+  }
+  
+  .fixed.top-0.h-16 span {
+    font-size: 0.9rem !important;
+  }
+  
+  .fixed.top-0.h-16 img {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+  }
+  
+  /* Badge positioning for header icons */
+  .fixed.top-0.h-16 .absolute.top-0.right-0 {
+    width: 14px !important;
+    height: 14px !important;
+    font-size: 0.6rem !important;
+  }
+}
+
+/* Mobile event dialog styles - make them more compact */
+@media (max-width: 640px) {
+  /* Make dialog content scrollable */
+  [role="dialog"] .DialogContent,
+  [role="dialog"] form,
+  [role="dialog"] > div {
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Ensure content doesn't overflow and allows scrolling */
+  [role="dialog"] form > div:not([class*="border-t"]) {
+    overflow-y: auto !important;
+    max-height: calc(85vh - 120px) !important; /* Account for header and footer */
+    padding-bottom: 1rem !important;
+  }
+  
+  /* Apply flex-wrap to form field containers */
+  [role="dialog"] .grid,
+  [role="dialog"] .grid-cols-2,
+  [role="dialog"] .flex.flex-col {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: wrap !important;
+  }
+  
+  /* Ultra-compact form fields */
+  [role="dialog"] .form-group,
+  [role="dialog"] .form-control,
+  [role="dialog"] .form-item,
+  [role="dialog"] .form-field,
+  [role="dialog"] div[class*="form-"],
+  [role="dialog"] div[class*="field"] {
+    margin-bottom: 0.35rem !important;
+    padding: 0 !important;
+  }
+  
+  /* Make form fields take full width and wrap when needed */
+  [role="dialog"] input,
+  [role="dialog"] select,
+  [role="dialog"] textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    padding: 0.25rem 0.4rem !important;
+    font-size: 0.75rem !important;
+    min-height: 1.75rem !important;
+    height: 1.75rem !important;
+    line-height: 1 !important;
+  }
+  
+  /* Smaller textarea */
+  [role="dialog"] textarea {
+    min-height: 3rem !important;
+    height: auto !important;
+  }
+  
+  /* Dialog title and description - smaller text */
+  [role="dialog"] .text-2xl {
+    font-size: 1.1rem !important;
+  }
+  
+  [role="dialog"] .text-gray-500 {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Smaller spacing in dialogs */
+  [role="dialog"] .px-6 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  [role="dialog"] .py-4 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Form fields - more compact */
+  [role="dialog"] .space-y-4 > div,
+  [role="dialog"] .space-y-6 > div {
+    margin-bottom: 0.35rem !important;
+  }
+  
+  /* Labels - smaller */
+  [role="dialog"] label,
+  [role="dialog"] .text-gray-500.text-sm {
+    font-size: 0.7rem !important;
+    margin-bottom: 0.1rem !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* Event details text */
+  [role="dialog"] h3,
+  [role="dialog"] .text-xl,
+  [role="dialog"] .text-2xl {
+    font-size: 1rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+  
+  [role="dialog"] p,
+  [role="dialog"] .text-gray-900,
+  [role="dialog"] .mt-1 {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.3rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  /* Button sizes - smaller */
+  [role="dialog"] button {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    min-height: 1.75rem !important;
+    height: auto !important;
+  }
+  
+  /* Icon button in dialog - smaller */
+  [role="dialog"] button[size="icon"] {
+    padding: 0.2rem !important;
+    height: 1.5rem !important;
+    width: 1.5rem !important;
+    min-height: 1.5rem !important;
+    min-width: 1.5rem !important;
+  }
+  
+  [role="dialog"] button svg {
+    height: 0.75rem !important;
+    width: 0.75rem !important;
+  }
+  
+  /* Dialog header and footer - smaller padding */
+  [role="dialog"] header,
+  [role="dialog"] footer,
+  [role="dialog"] .border-t,
+  [role="dialog"] .border-b {
+    padding: 0.5rem !important;
+  }
+  
+  /* Make headers and footers sticky */
+  [role="dialog"] header {
+    position: sticky !important;
+    top: 0 !important;
+    background: white !important;
+    z-index: 10 !important;
+  }
+  
+  [role="dialog"] footer,
+  [role="dialog"] .border-t {
+    position: sticky !important;
+    bottom: 0 !important;
+    background: white !important;
+    z-index: 10 !important;
+  }
+  
+  /* Dialog icons - smaller */
+  [role="dialog"] .flex.items-start.gap-4 {
+    gap: 0.35rem !important;
+  }
+  
+  [role="dialog"] .flex.items-start.gap-4 svg {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+    margin-top: 0.1rem !important;
+  }
+  
+  /* Force date/time pickers to wrap properly */
+  [role="dialog"] div[class*="date"],
+  [role="dialog"] div[class*="time"] {
+    max-width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+  
+  /* Date/time field specific adjustments */
+  [role="dialog"] div[class*="date"] input,
+  [role="dialog"] div[class*="time"] input,
+  [role="dialog"] div[class*="date"] select,
+  [role="dialog"] div[class*="time"] select {
+    width: auto !important;
+    min-width: 4.5rem !important;
+  }
+  
+  /* Smaller dropdown items */
+  [role="dialog"] [role="option"],
+  [role="dialog"] [role="listbox"] div {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.4rem !important;
+    min-height: 1.75rem !important;
+  }
+  
+  /* Ensure long text doesn't overflow */
+  [role="dialog"] div,
+  [role="dialog"] span,
+  [role="dialog"] p {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Reduce margin in dialog content */
+  [role="dialog"] .DialogContent > div {
+    margin: 0 !important;
+  }
+  
+  /* Make form sections more compact */
+  [role="dialog"] .form-section,
+  [role="dialog"] section,
+  [role="dialog"] fieldset {
+    margin-bottom: 0.5rem !important;
+    padding: 0 !important;
+  }
+}
+
 /* Calendar mobile optimizations */
 @media (max-width: 640px) {
   .toastui-calendar-layout {
-    font-size: 0.8rem !important;
+    font-size: 0.75rem !important;
   }
 
   .toastui-calendar-day-name {
@@ -16,20 +300,179 @@
     margin-right: 0 !important;
   }
 
+  /* Reduce the width of time labels */
   .toastui-calendar-day-grid-left {
-    width: 48px !important;
+    width: 20px !important;
   }
 
   .toastui-calendar-timezone-labels {
-    width: 48px !important;
+    width: 20px !important;
   }
 
   .toastui-calendar-timegrid-timezone {
-    width: 48px !important;
+    width: 20px !important;
+  }
+  
+  /* Time label text alignment */
+  .toastui-calendar-timegrid-time {
+    font-size: 0.6rem !important;
+    padding: 1px 0 !important;
+    text-align: center !important;
   }
 
   .toastui-calendar-timegrid-hour {
     padding-left: 0 !important;
     padding-right: 0 !important;
+  }
+
+  /* Fix left gap by making calendar wider and positioned to the left */
+  .mobile-calendar-container {
+    width: 140% !important;
+    position: relative;
+    left: -35px;
+    overflow-x: hidden;
+  }
+
+  /* Ensure the calendar container expands vertically */
+  .toastui-calendar-week,
+  .toastui-calendar-month {
+    height: 100% !important;
+  }
+
+  /* Containers must maintain full height */
+  .toastui-calendar-week-container,
+  .toastui-calendar-month-container {
+    height: 100% !important;
+  }
+
+  /* Reduce padding to show more content */
+  .toastui-calendar-weekday-grid-line {
+    padding: 0 !important;
+  }
+  
+  /* Smaller event height for more compact view */
+  .toastui-calendar-weekday-event {
+    height: 18px !important;
+    line-height: 18px !important;
+    font-size: 0.65rem !important;
+  }
+
+  /* Make month view more compact */
+  .toastui-calendar-month {
+    min-height: unset !important;
+  }
+
+  .toastui-calendar-month-daygrid {
+    min-height: unset !important;
+  }
+  
+  .toastui-calendar-month-weeks {
+    min-height: unset !important;
+  }
+  
+  .toastui-calendar-month-week-item {
+    min-height: unset !important;
+    height: auto !important;
+  }
+  
+  /* Reduce event padding in week view */
+  .toastui-calendar-time-event {
+    padding: 1px !important;
+  }
+  
+  /* Make event text more visible */
+  .toastui-calendar-event-title {
+    font-weight: 500 !important;
+  }
+  
+  /* Override width for week/day view */
+  .toastui-calendar-week-container {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  
+  /* Hide borders to save space */
+  .toastui-calendar-grid-cell-border {
+    border-width: 0.5px !important;
+  }
+  
+  /* Adjust horizontal scroll container */
+  .toastui-calendar-panel-container {
+    width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Make day names in week view more compact */
+  .toastui-calendar-week-dayname-container {
+    height: 28px !important;
+    padding: 0 !important;
+  }
+  
+  .toastui-calendar-day-name-item {
+    padding: 0 !important;
+    height: 28px !important;
+  }
+  
+  /* Adjust the calendar width and horizontal scroll */
+  .toastui-calendar-panel-resizer {
+    display: none !important;
+  }
+  
+  /* Ensure grid lines for days are visible but thin */
+  .toastui-calendar-daygrid-cell {
+    border-width: 0.5px !important;
+  }
+  
+  /* Make day names smaller and more visible */
+  .toastui-calendar-day-name {
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    height: 28px !important;
+    line-height: 28px !important;
+  }
+
+  /* Make monthly day number smaller and top-aligned */
+  .toastui-calendar-daygrid-cell-date {
+    font-size: 0.75rem !important;
+    padding: 2px !important;
+  }
+}
+
+/* Smaller calendar in extra-small screens */
+@media (max-width: 380px) {
+  .toastui-calendar-layout {
+    font-size: 0.65rem !important;
+  }
+  
+  .toastui-calendar-day-grid-left {
+    width: 18px !important;
+  }
+  
+  .toastui-calendar-timezone-labels {
+    width: 18px !important;
+  }
+  
+  .toastui-calendar-timegrid-timezone {
+    width: 18px !important;
+  }
+  
+  /* Adjust left position for even smaller screens */
+  .mobile-calendar-container {
+    left: -40px;
+    width: 150% !important;
+  }
+}
+
+/* iOS specific adjustments for safari URL bar */
+@supports (-webkit-touch-callout: none) {
+  .toastui-calendar-layout {
+    height: 100% !important;
+  }
+  
+  /* Fix for iOS-specific height issues */
+  html, body, #root, .App {
+    height: 100%;
+    min-height: -webkit-fill-available;
+    overflow: hidden;
   }
 }

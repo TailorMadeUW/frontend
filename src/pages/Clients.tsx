@@ -3,12 +3,11 @@ import PageHeader from '../components/PageHeader'
 
 const Clients: React.FC = () => {
   return (
-    <div className="flex flex-col flex-1 h-full overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-full">
       <PageHeader title="Clients" />
-      <div className="flex-1 min-h-0 p-6">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <p className="text-gray-600">Client management coming soon...</p>
-        </div>
+      <div className="p-6 flex-1">
+        <h2 className="text-xl font-semibold mb-4">Client Management</h2>
+        <p className="text-gray-600">This page is under construction. You will be able to manage clients here soon.</p>
       </div>
     </div>
   )
