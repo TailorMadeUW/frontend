@@ -6,6 +6,7 @@ import useCalendarStore from '../stores/calendarStore'
 import chatUploadIcon from './assets/img/chat-upload.png'
 import { v4 as uuidv4 } from 'uuid'
 import { format } from 'date-fns'
+import api from '../lib/api'
 
 interface Message {
   id: string
@@ -91,46 +92,12 @@ const ChatWidget: React.FC = () => {
     setMessages(prev => [...prev, uploadingMessage])
     setIsUploading(true)
 
-    // Prepare form data
-    const formData = new FormData()
-    formData.append('file', file)
-
     try {
-      // Make the API call with appropriate headers
-      const response = await fetch('https://tailormadeserver-dbhmbqg0b9eda3dd.westus2-01.azurewebsites.net/note/upload', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          // No Content-Type header with FormData as browser sets it automatically with boundary
-        },
-        // Adding mode: 'cors' explicitly (this is the default)
-        mode: 'cors'
-      }).catch(error => {
-        console.error('Fetch error:', error);
-        return null; // Return null to indicate fetch failed
-      });
-
-      let eventData: EventData;
-
-      // Check if fetch failed or response is not ok
-      if (!response || !response.ok) {
-        console.log('Using mock data due to CORS or server issue');
-        
-        // Create mock event data for demonstration purposes
-        eventData = {
-          date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
-          clientName: "John Smith",
-          tailor: "Maria Rodriguez",
-          duration: 60,
-          appointmentsNeeded: 2,
-          inventoryNeeded: "Blue fabric (2 yards), Buttons (12)",
-          notes: "Client requested slim fit suit with modern lapels. Previous measurements need updating due to recent weight change.",
-          measurements: "Chest: 42\", Waist: 34\", Inseam: 32\""
-        };
-      } else {
-        // Parse the real response if available
-        eventData = await response.json();
-      }
+      // Use the simplified API service
+      const apiResponse = await api.note.upload(file);
+      
+      // Extract the event data from the response
+      const eventData: EventData = apiResponse.data;
 
       // Create event request message
       const eventRequestMessage: Message = {
@@ -151,51 +118,24 @@ const ChatWidget: React.FC = () => {
         },
         eventRequestMessage
       ])
-      
+
+      // Show notification about error if there was one but we used mock data
+      if (!apiResponse.success) {
+        console.warn('API error (using mock data):', apiResponse.error);
+      }
     } catch (error) {
-      console.error('Error processing file:', error)
+      console.error('Upload error:', error);
       
-      // Show error message
+      // Handle errors gracefully in the UI
       setMessages(prev => [
-        ...prev.filter(msg => msg.id !== uploadingMessage.id), // Remove uploading message
-        {
-          id: uuidv4(),
-          type: 'user',
-          content: `Uploaded image: ${file.name}`,
-          timestamp: new Date()
-        },
+        ...prev.filter(msg => msg.id !== uploadingMessage.id),
         {
           id: uuidv4(),
           type: 'system',
-          content: 'Sorry, there was an error processing your image. I\'ll use sample data for demonstration purposes.',
+          content: `There was an error processing your image. Please try again.`,
           timestamp: new Date()
         }
       ])
-
-      // Even in error case, provide a mock response after a short delay
-      setTimeout(() => {
-        const mockEventData: EventData = {
-          date: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), // Day after tomorrow
-          clientName: "Sarah Johnson",
-          tailor: "David Chen",
-          duration: 45,
-          appointmentsNeeded: 1,
-          inventoryNeeded: "None",
-          notes: "Dress alteration for wedding. Needs to be taken in at waist and hemmed.",
-          measurements: "Bust: 36\", Waist: 28\", Hips: 38\""
-        };
-
-        const eventRequestMessage: Message = {
-          id: uuidv4(),
-          type: 'event-request',
-          content: 'Here\'s a sample of what the detected event details would look like:',
-          timestamp: new Date(),
-          eventData: mockEventData
-        }
-        
-        setMessages(prev => [...prev, eventRequestMessage]);
-      }, 1000);
-      
     } finally {
       setIsUploading(false)
       // Reset file input

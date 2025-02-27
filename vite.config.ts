@@ -9,6 +9,14 @@ export default defineConfig({
   },
   server: {
     host: true,
-    allowedHosts: ['localhost.daeila.com']
-  }
+    allowedHosts: ['localhost.daeila.com'],
+    proxy: {
+      '/api': {
+        target: 'https://tailormadeserver-dbhmbqg0b9eda3dd.westus2-01.azurewebsites.net',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  },
+  base: '/',
 })
