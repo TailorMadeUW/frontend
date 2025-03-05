@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Calendar, Clock, Settings, User, Terminal, Menu, X, CreditCard, MessageSquare, Bell, Users, Percent } from 'lucide-react'
+import { Calendar, Clock, Settings, User, Terminal, Menu, X, CreditCard, MessageSquare, Bell, Users, Percent, Home as HomeIcon } from 'lucide-react'
 import { useLocation, Link } from 'react-router-dom'
 import useCalendarStore from '../stores/calendarServerStore'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
@@ -18,6 +18,7 @@ const SideBar: React.FC = () => {
   const location = useLocation()
 
   const menuItems = [
+    { icon: HomeIcon, label: 'Home', path: '/app/home' },
     { icon: Calendar, label: 'Calendar', path: '/app/calendar' },
     { icon: Clock, label: 'Appointment', path: '/app/appointment' },
     { icon: Users, label: 'Clients', path: '/app/clients' },

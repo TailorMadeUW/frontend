@@ -4,6 +4,7 @@ import SideBar from './components/SideBar'
 import Toast from './components/ui/Toast'
 import ChatWidget from './components/ChatWidget'
 import Calendar from './pages/Calendar'
+import Home from './pages/Home'
 import Schedule from './pages/Schedule'
 import Contacts from './pages/Contacts'
 import Settings from './pages/Settings'
@@ -16,7 +17,7 @@ import Chats from './pages/Chats'
 import Profile from './pages/Profile'
 import LoadingScreen from './components/LoadingScreen'
 import useLoadingStore from './stores/loadingStore'
-import useCalendarStore from './stores/calendarServerStore'
+import useCalendarStore from './stores/calendarStore'
 import useProjectServerStore from './stores/projectServerStore'
 
 const App: React.FC = () => {
@@ -58,7 +59,8 @@ const App: React.FC = () => {
           <SideBar />
           <main className="flex-1">
             <Routes>
-              <Route path="/" element={<Navigate to="/app/calendar" replace />} />
+              <Route path="/" element={<Navigate to="/app/home" replace />} />
+              <Route path="/app/home" element={<Home />} />
               <Route path="/app/calendar" element={<Calendar />} />
               <Route path="/app/appointment" element={<Appointment />} />
               <Route path="/app/clients" element={<Clients />} />
