@@ -16,15 +16,18 @@ import Chats from './pages/Chats'
 import Profile from './pages/Profile'
 import LoadingScreen from './components/LoadingScreen'
 import useLoadingStore from './stores/loadingStore'
+import useCalendarStore from './stores/calendarServerStore'
 
 const App: React.FC = () => {
   const { isLoading, initializeApp, resourceLoaded, setLoading } = useLoadingStore()
+  const { initializeDefaultCalendars } = useCalendarStore()
 
   useEffect(() => {
     // Initialize the app and load essential resources
     const startApp = async () => {
       // First, initialize core app data
       await initializeApp()
+      await initializeDefaultCalendars()
       
       // Mark resources as loaded as they become available
       // In a real app, you'd do this after each resource loads successfully

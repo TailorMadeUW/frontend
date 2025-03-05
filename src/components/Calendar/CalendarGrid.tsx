@@ -3,7 +3,7 @@ import { getWeekDays } from '../../lib/utils'
 import { Event } from '../../types'
 import EventDialog from './EventDialog'
 import { differenceInDays } from 'date-fns'
-import useCalendarStore from '../../stores/calendarStore'
+import useCalendarStore from '../../stores/calendarServerStore'
 
 interface CalendarGridProps {
   currentDate: Date

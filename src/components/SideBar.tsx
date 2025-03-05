@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Calendar, Clock, Settings, User, Terminal, Menu, X, CreditCard, MessageSquare, Bell, Users, Percent } from 'lucide-react'
 import { useLocation, Link } from 'react-router-dom'
-import useCalendarStore from '../stores/calendarStore'
+import useCalendarStore from '../stores/calendarServerStore'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Button } from './ui/button'
 import useNotificationStore from '../stores/notificationStore'

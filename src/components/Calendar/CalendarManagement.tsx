@@ -1,7 +1,7 @@
 import React from 'react'
 import { Plus, MoreVertical, Eye, EyeOff, Trash2, X } from 'lucide-react'
 import { Button } from '../ui/button'
-import useCalendarStore from '../../stores/calendarStore'
+import useCalendarStore from '../../stores/calendarServerStore'
 import { Calendar } from '../../types'
 import {
   DropdownMenu,

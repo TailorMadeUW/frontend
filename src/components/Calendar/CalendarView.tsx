@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, MouseEvent } from 'react'
 import Calendar from '@toast-ui/react-calendar'
 import '@toast-ui/calendar/dist/toastui-calendar.min.css'
-import useCalendarStore from '../../stores/calendarStore'
+import useCalendarStore from '../../stores/calendarServerStore'
 import useNotificationStore from '../../stores/notificationStore'
 import { CalendarManagement } from './CalendarManagement'
 import EventFormDialog from './EventFormDialog'
@@ -27,13 +27,7 @@ const CalendarView: React.FC = () => {
   const [newEventFormData, setNewEventFormData] = useState<Partial<Event> | null>(null)
   const [currentViewDate, setCurrentViewDate] = useState(new Date())
   const [currentView, setCurrentView] = useState<ViewType>('week')
-
-  // Initialize default calendars when component is mounted
-  useEffect(() => {
-    const { initializeDefaultCalendars } = useCalendarStore.getState()
-    initializeDefaultCalendars()
-  }, [])
-
+  
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 640
@@ -210,10 +204,12 @@ const CalendarView: React.FC = () => {
   }
 
   const formatEvents = (events: Event[]) => {
-    console.log('Formatting events:', JSON.stringify(events, null, 2))
+    console.log('Formatting events:', events, calendars)
     const formattedEvents = events.filter(event => {
+
+      // This logic is not working properly right now so comment it out
       const calendar = calendars.find(cal => cal.id === event.calendarId)
-      return calendar?.isAvailable
+      return true
     }).map(event => {
       const formattedEvent = {
         id: event.id,
@@ -281,14 +277,14 @@ const CalendarView: React.FC = () => {
     setIsFormDialogOpen(true)
   }
 
-  const handleDeleteEvent = () => {
+  const handleDeleteEvent = async () => {
     if (selectedEvent) {
-      deleteEvent(selectedEvent.id)
+      await deleteEvent(selectedEvent.id)
       
       // Remove from calendar instance
       if (calendarRef.current) {
         const calendarInstance = calendarRef.current.getInstance()
-        calendarInstance.deleteEvent(selectedEvent.id, selectedEvent.calendarId)
+        await calendarInstance.deleteEvent(selectedEvent.id, selectedEvent.calendarId)
       }
       
       showNotification('The event has been deleted successfully.', 'success')
@@ -297,7 +293,7 @@ const CalendarView: React.FC = () => {
     }
   }
 
-  const handleEventFormSubmit = (eventData: {
+  const handleEventFormSubmit = async (eventData: {
     title: string
     description?: string
     start: Date
@@ -351,12 +347,12 @@ const CalendarView: React.FC = () => {
       console.log('Updating event with:', JSON.stringify(updatedEvent, null, 2));
       
       // Update store
-      updateEvent(selectedEvent.id, updatedEvent)
+      await updateEvent(selectedEvent.id, updatedEvent)
 
       // Update calendar instance
       if (calendarRef.current) {
         const calendarInstance = calendarRef.current.getInstance()
-        calendarInstance.updateEvent(selectedEvent.id, selectedEvent.calendarId, {
+        await calendarInstance.updateEvent(selectedEvent.id, selectedEvent.calendarId, {
           id: selectedEvent.id,
           calendarId: selectedEvent.calendarId,
           title: updatedEvent.title,
@@ -383,7 +379,7 @@ const CalendarView: React.FC = () => {
       }
       
       // Update store
-      addEvent(newEvent)
+      await addEvent(newEvent)
 
       // Create event in calendar instance
       if (calendarRef.current) {

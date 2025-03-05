@@ -22,7 +22,7 @@ import {
   Tag
 } from 'lucide-react'
 import { Event } from '../../types'
-import useCalendarStore from '../../stores/calendarStore'
+import useCalendarStore from '../../stores/calendarServerStore'
 
 interface FormData {
   title: string

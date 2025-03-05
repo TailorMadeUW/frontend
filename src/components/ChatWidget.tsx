@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { X, Send, Image, Calendar, Loader2, CheckCircle } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
-import useCalendarStore from '../stores/calendarStore'
+import useCalendarStore from '../stores/calendarServerStore'
 import chatUploadIcon from './assets/img/chat-upload.png'
 import { v4 as uuidv4 } from 'uuid'
 import { format } from 'date-fns'
@@ -145,7 +145,7 @@ const ChatWidget: React.FC = () => {
     }
   }
 
-  const createEvent = (eventData: EventData) => {
+  const createEvent = async (eventData: EventData) => {
     const eventDate = new Date(eventData.date)
     
     // Calculate end time based on duration (in minutes)
@@ -164,7 +164,7 @@ const ChatWidget: React.FC = () => {
     }
     
     // Add event to the calendar store
-    addEvent(newEvent)
+    await addEvent(newEvent)
     
     // Create the event ID for reference
     const createdEventId = newEvent.id

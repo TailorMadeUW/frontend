@@ -14,7 +14,7 @@ import { Button } from '../ui/button'
 import { Label } from '@radix-ui/react-label'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
-import useCalendarStore from '../../stores/calendarStore'
+import useCalendarStore from '../../stores/calendarServerStore'
 import EmojiPicker from './EmojiPicker'
 import { Palette, CalendarDays, Info, X } from 'lucide-react'
 

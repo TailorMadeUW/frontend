@@ -16,7 +16,7 @@ import useAlertStore, { Alert, AlertType } from '../stores/alertStore'
 import { cn } from '../lib/utils'
 import { format, formatDistanceToNow } from 'date-fns'
 import { Button } from './ui/button'
-import useCalendarStore from '../stores/calendarStore'
+import useCalendarStore from '../stores/calendarServerStore'
 import { Event } from '../types'
 
 // Utility function to format timestamps
@@ -70,7 +70,7 @@ const AlertItem: React.FC<AlertItemProps> = ({ alert, onRead, onRemove }) => {
     }
   }
 
-  const handleConfirmAppointment = (e: React.MouseEvent) => {
+  const handleConfirmAppointment = async (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
     
@@ -93,7 +93,7 @@ const AlertItem: React.FC<AlertItemProps> = ({ alert, onRead, onRemove }) => {
     }
     
     // Add the event to the calendar
-    addEvent(newEvent)
+    await addEvent(newEvent)
     
     // Mark this alert as read
     onRead(alert.id)
@@ -104,7 +104,7 @@ const AlertItem: React.FC<AlertItemProps> = ({ alert, onRead, onRemove }) => {
     }
   }
 
-  const handleConfirmReschedule = (e: React.MouseEvent) => {
+  const handleConfirmReschedule = async (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
     
@@ -118,7 +118,7 @@ const AlertItem: React.FC<AlertItemProps> = ({ alert, onRead, onRemove }) => {
       
       if (existingEvent) {
         // Update the event with new times
-        updateEvent(eventId, {
+        await updateEvent(eventId, {
           ...existingEvent,
           start: suggestedStart || existingEvent.start,
           end: suggestedEnd || existingEvent.end

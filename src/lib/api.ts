@@ -72,15 +72,130 @@ export const noteApi = {
  */
 export const calendarApi = {
   // Get a list of events
-  getEvents: async () => {
-    // Implementation would be based on Swagger docs
-    return { success: true, data: [], error: null };
+  getAppointments: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/calendar`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Calendar fetch failed:', error);
+
+      // In development, provide mock data
+      if (!import.meta.env.PROD) {
+        console.log('Using mock data due to API error');
+        return {
+          success: true,
+          data: [
+            {
+              id: '1',
+              date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+              clientName: 'John Smith',
+              duration: 60,
+              type: 'Fitting'
+            }
+          ],
+          error: null
+        };
+      }
+
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   },
-  
-  // Add a new event
-  addEvent: async (eventData: any) => {
-    // Implementation would be based on Swagger docs
-    return { success: true, data: { id: 'new-event-id' }, error: null };
+  addAppointment: async (appointmentData: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/calendar/appointment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(appointmentData),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Add appointment failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+  updateAppointment: async (id: string, appointmentData: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/calendar/appointment/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(appointmentData),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Update appointment failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+  deleteAppointment: async(id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/calendar/appointment/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        error: null
+      };
+    } catch (error) {
+      console.error('Update appointment failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
 };
 

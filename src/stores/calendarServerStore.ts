@@ -1,18 +1,20 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { Calendar, Event } from '../types'
 import { v4 as uuidv4 } from 'uuid'
+import { calendarApi } from '../lib/api'
 
 interface CalendarState {
   calendars: Calendar[]
   events: Event[]
+  isLoading: boolean
   addCalendar: (calendar: Omit<Calendar, 'id'>) => void
   updateCalendar: (id: string, updates: Partial<Calendar>) => void
   deleteCalendar: (id: string) => void
-  addEvent: (event: Omit<Event, 'id'>) => void
-  updateEvent: (id: string, updates: Partial<Omit<Event, 'id'>>) => void
-  deleteEvent: (id: string) => void
-  initializeDefaultCalendars: () => void
+  addEvent: (event: Omit<Event, 'id'>) => Promise<void>
+  updateEvent: (id: string, updates: Partial<Omit<Event, 'id'>>) => Promise<void>
+  deleteEvent: (id: string) => Promise<void>
+  initializeDefaultCalendars: () => Promise<void>
+  fetchEvents: () => Promise<void>
 }
 
 // Default calendars to initialize the store with
@@ -49,16 +51,16 @@ const defaultCalendars: Omit<Calendar, 'id'>[] = [
   }
 ];
 
-const useCalendarStore = create<CalendarState>()(
-  persist(
+const useCalendarServerStore = create<CalendarState>()(
     (set, get) => ({
       calendars: [],
       events: [],
+      isLoading: false,
       addCalendar: (calendar) => 
         set((state) => ({
           calendars: [...state.calendars, { 
             ...calendar, 
-            id: '',
+            id: uuidv4(),
             backgroundColor: calendar.color + '20',
             dragBackgroundColor: calendar.color + '20',
             borderColor: calendar.color
@@ -76,41 +78,91 @@ const useCalendarStore = create<CalendarState>()(
             } : cal
           )
         })),
+
       deleteCalendar: (id) => 
         set((state) => ({
           calendars: state.calendars.filter(cal => cal.id !== id),
           events: state.events.filter(event => event.calendarId !== id)
         })),
-      addEvent: (event) => 
-        set((state) => ({
-          events: [...state.events, { ...event, id: uuidv4() }]
-        })),
-      updateEvent: (id, updates) => 
-        set((state) => ({
-          events: state.events.map(event => 
-            event.id === id ? { ...event, ...updates } : event
-          )
-        })),
-      deleteEvent: (id) => 
-        set((state) => ({
-          events: state.events.filter(event => event.id !== id)
-        })),
-      initializeDefaultCalendars: () => {
+
+      addEvent: async (event) => {
+        try {
+          const response = await calendarApi.addAppointment({
+            ...event,
+            date: event.start,
+            clientName: event.title
+          });
+
+          if (response.success) {
+            // Refresh the events list instead of manually updating state
+            await get().fetchEvents();
+          }
+        } catch (error) {
+          console.error('Failed to add event:', error);
+        }
+      },
+  
+      updateEvent: async (id, updates) => {
+        try {
+          const response = await calendarApi.updateAppointment(id, {
+            ...updates,
+            date: updates.start,
+            clientName: updates.title
+          });
+
+          if (response.success) {
+            await get().fetchEvents();
+          }
+        } catch (error) {
+          console.error('Failed to update event:', error);
+        }
+      },
+
+      deleteEvent: async (id) => {
+        try {
+          const response = await calendarApi.deleteAppointment(id);
+          
+          if (response.success) {
+            await get().fetchEvents();
+          }
+        } catch (error) {
+          console.error('Failed to delete event:', error);
+        }
+      },
+
+      fetchEvents: async () => {
+        set({ isLoading: true });
+        try {
+          const response = await calendarApi.getAppointments();
+          
+          if (response.success && response.data) {
+            const formattedEvents = response.data.map((appointment: any) => ({
+              ...appointment,
+              title: appointment.clientName,
+              start: appointment.date,
+            }));
+
+            set({ events: formattedEvents });
+          }
+        } catch (error) {
+          console.error('Failed to fetch events:', error);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      initializeDefaultCalendars: async () => {
         const { calendars, addCalendar } = get();
         
-        // Only add default calendars if none exist
         if (calendars.length === 0) {
           defaultCalendars.forEach(calendar => {
             addCalendar(calendar);
           });
         }
+
+        await get().fetchEvents();
       }
-    }),
-    {
-      name: 'calendar-storage',
-      version: 1
-    }
-  )
+    })
 )
 
-export default useCalendarStore
+export default useCalendarServerStore
