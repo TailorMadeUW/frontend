@@ -140,6 +140,7 @@ const useCalendarServerStore = create<CalendarState>()(
               ...appointment,
               title: appointment.clientName,
               start: appointment.date,
+              end: new Date(new Date(appointment.date).getTime() + appointment.duration * 60000)
             }));
 
             set({ events: formattedEvents });
