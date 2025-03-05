@@ -212,11 +212,7 @@ const CalendarView: React.FC = () => {
       return true
     }).map(event => {
       const formattedEvent = {
-        id: event.id,
-        calendarId: event.calendarId,
-        title: event.title,
-        start: event.start,
-        end: event.end,
+        ...event,
         isAllday: false,
         category: 'time' as const,
         body: event.description || '',
