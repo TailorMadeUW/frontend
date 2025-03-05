@@ -19,7 +19,7 @@ export const noteApi = {
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch(`${API_BASE_URL}/note/upload`, {
+      const response = await fetch(`${API_BASE_URL}/agent/upload`, {
         method: 'POST',
         body: formData,
         // Allow credentials for CORS
