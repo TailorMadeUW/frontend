@@ -1,8 +1,16 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import CalendarView from '../components/Calendar/CalendarView'
 import PageHeader from '../components/PageHeader'
+import useCalendarServerStore from '../stores/calendarServerStore'
 
 const Calendar: React.FC = () => {
+  const { fetchEvents } = useCalendarServerStore()
+
+  useEffect(() => {
+    // Fetch calendar events from the server when the component mounts
+    fetchEvents()
+  }, [fetchEvents])
+  
   return (
     <div className="flex flex-col flex-1 h-full overflow-hidden bg-gray-50">
       <PageHeader title="My Calendar" />

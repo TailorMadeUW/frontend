@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, MouseEvent } from 'react'
 import Calendar from '@toast-ui/react-calendar'
 import '@toast-ui/calendar/dist/toastui-calendar.min.css'
-import useCalendarStore from '../../stores/calendarServerStore'
+import useCalendarServerStore from '../../stores/calendarServerStore'
 import useNotificationStore from '../../stores/notificationStore'
 import { CalendarManagement } from './CalendarManagement'
 import EventFormDialog from './EventFormDialog'
@@ -14,7 +14,7 @@ import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucid
 type CalendarEvent = Omit<Event, 'id'> & { id?: string }
 
 const CalendarView: React.FC = () => {
-  const { events, calendars, addEvent, updateEvent, deleteEvent } = useCalendarStore()
+  const { events, calendars, addEvent, updateEvent, deleteEvent } = useCalendarServerStore()
   const { showNotification } = useNotificationStore()
   const calendarRef = useRef<any>(null)
   const [showCalendarManagement, setShowCalendarManagement] = useState(false)
