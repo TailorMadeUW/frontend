@@ -34,3 +34,12 @@ export interface AvailabilitySlot {
   end: Date
   isAvailable: boolean
 }
+
+export interface Project {
+  id: string
+  name: string
+  description: string
+  clientName: string
+  clientCost: number
+  dueDate: Date
+}

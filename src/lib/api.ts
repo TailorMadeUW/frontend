@@ -199,7 +199,171 @@ export const calendarApi = {
   }
 };
 
+export const projectApi = {
+  getAll: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/project`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Project fetch failed:', error);
+
+      // In development, provide mock data
+      if (!import.meta.env.PROD) {
+        console.log('Using mock data due to API error');
+        return {
+          success: true,
+          data: [
+            {
+              id: '1',
+              clientName: 'John Smith',
+              description: 'Three-piece suit',
+              status: 'In Progress',
+              startDate: new Date(Date.now()).toISOString(),
+              dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+              measurements: {
+                chest: 42,
+                waist: 34,
+                inseam: 32
+              }
+            }
+          ],
+          error: null
+        };
+      }
+
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+
+  get: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/project/${id}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Project fetch failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+
+  create: async (projectData: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/project`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Create project failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+
+  update: async (id: string, projectData: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/project/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Update project failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+
+  delete: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/project/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        error: null
+      };
+    } catch (error) {
+      console.error('Delete project failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+};
+
 export default {
   note: noteApi,
-  calendar: calendarApi
+  calendar: calendarApi,
+  projectApi: projectApi,
 }; 
