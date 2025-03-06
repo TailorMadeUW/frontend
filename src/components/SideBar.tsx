@@ -68,8 +68,10 @@ const SideBar: React.FC = () => {
   const SidebarContent = ({ includeHeaderItems = false }) => (
     <>
       <div className="px-4 mb-6 flex items-center gap-2">
-        <img src={TailorMadeLogo} alt="TailorMade Logo" className="w-8 h-8" />
-        <span className="text-lg font-semibold text-blue-600">TailorMade</span>
+        <Link to="/app/home" className="flex items-center gap-2">
+          <img src={TailorMadeLogo} alt="TailorMade Logo" className="w-8 h-8" />
+          <span className="text-lg font-semibold text-blue-600">TailorMade</span>
+        </Link>
       </div>
       
       {menuItems.map((item) => (
@@ -160,10 +162,10 @@ const SideBar: React.FC = () => {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <div className="flex items-center gap-2">
+            <Link to="/app/home" className="flex items-center gap-2">
               <img src={TailorMadeLogo} alt="TailorMade Logo" className="w-6 h-6" />
               <span className="text-lg font-semibold text-blue-600">TailorMade</span>
-            </div>
+            </Link>
           </div>
           
           {/* Mobile Header Items */}

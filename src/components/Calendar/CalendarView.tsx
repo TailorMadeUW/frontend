@@ -10,6 +10,7 @@ import { Event } from '../../types'
 import type { EventObject, Options, ViewType } from '@toast-ui/calendar'
 import { Button } from '../ui/button'
 import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
+import { isValid } from 'date-fns'
 
 type CalendarEvent = Omit<Event, 'id'> & { id?: string }
 
@@ -74,8 +75,8 @@ const CalendarView: React.FC = () => {
         // Optimize for day view on mobile
         calendarRef.current.getInstance().setOptions({
           week: {
-            hourStart: 7,  // Start from 7 AM
-            hourEnd: 22,   // End at 10 PM
+            hourStart: 0,  // Show full 24 hours
+            hourEnd: 24,   // Show full 24 hours
           }
         });
         
@@ -117,8 +118,8 @@ const CalendarView: React.FC = () => {
         if (isMobileDevice && initialViewType === 'day') {
           calendarRef.current.getInstance().setOptions({
             week: {
-              hourStart: 7,  // Start from 7 AM
-              hourEnd: 22,   // End at 10 PM
+              hourStart: 0,  // Show full 24 hours
+              hourEnd: 24,   // Show full 24 hours
             }
           });
           
@@ -285,6 +286,50 @@ const CalendarView: React.FC = () => {
     }
   }, [events])
 
+  // Add a new useEffect to handle calendar navigation and showing event on mount
+  useEffect(() => {
+    // Check if we need to focus on a specific event (from ChatWidget)
+    const focusEventId = sessionStorage.getItem('focusEventId')
+    const calendarDate = sessionStorage.getItem('calendarDate')
+    const showEventDialog = sessionStorage.getItem('showEventDialog')
+    
+    if (focusEventId && calendarRef.current) {
+      // Find the event in our store
+      const event = events.find(e => e.id === focusEventId)
+      
+      // Set the date from sessionStorage or from the event
+      if (calendarDate) {
+        const newDate = new Date(calendarDate)
+        if (isValid(newDate)) {
+          // Set the current date to the event's date
+          setCurrentViewDate(newDate)
+          
+          // Navigate to the event's date
+          calendarRef.current.getInstance().setDate(newDate)
+          
+          // Make sure we're in day view (easier to see the specific event)
+          if (window.innerWidth < 640) {
+            changeView('day')
+          }
+        }
+      }
+      
+      // If event exists, select it to view details
+      if (event && showEventDialog === 'true') {
+        // Short delay to ensure the calendar is fully rendered
+        setTimeout(() => {
+          setSelectedEvent(event)
+          setIsViewDialogOpen(true)
+          
+          // Clear the sessionStorage values
+          sessionStorage.removeItem('focusEventId')
+          sessionStorage.removeItem('calendarDate')
+          sessionStorage.removeItem('showEventDialog')
+        }, 300)
+      }
+    }
+  }, [events, calendarRef, changeView])
+
   // Calendar configuration options
   const calendarOptions: Options = {
     defaultView: window.innerWidth < 640 ? 'day' as ViewType : 'week' as ViewType,
@@ -294,11 +339,11 @@ const CalendarView: React.FC = () => {
     isReadOnly: false,
     week: {
       startDayOfWeek: 0,
-      dayNames: isMobile ? ['', '', '', '', '', '', ''] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      dayNames: isMobile ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       workweek: false,
       showNowIndicator: true,
-      hourStart: isMobile && currentView === 'day' ? 7 : 0, // Start from 7 AM in day view for better space utilization
-      hourEnd: isMobile && currentView === 'day' ? 22 : 24, // End at 10 PM in day view for better space utilization
+      hourStart: 0, // Show full 24 hours
+      hourEnd: 24, // Show full 24 hours
       taskView: false,
       eventView: ['time'],
       collapseDuplicateEvents: true
@@ -739,29 +784,29 @@ const CalendarView: React.FC = () => {
       )}
       
       {/* Header */}
-      <div className="flex-none px-4 py-3 border-b">
-        <div className="flex items-center justify-between gap-2">
+      <div className="flex-none px-2 py-1 border-b">
+        <div className="flex flex-wrap items-center justify-between gap-1">
           {/* Date Display */}
-          <div className="text-lg font-medium">
+          <div className="text-base font-medium mr-1">
             {getFormattedViewDate()}
           </div>
           
           {/* Navigation Controls */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Button 
               size="sm" 
               variant="ghost" 
               onClick={navigatePrevious}
-              className="p-1 sm:p-2 h-7 w-7"
+              className="p-0.5 h-6 w-6 min-w-0"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3 w-3" />
             </Button>
             
             <Button 
               size="sm" 
               variant="outline" 
               onClick={navigateToday}
-              className="text-xs px-2 py-1 h-7"
+              className="text-xs px-1 py-0.5 h-6 min-h-0 min-w-0"
             >
               Today
             </Button>
@@ -770,9 +815,9 @@ const CalendarView: React.FC = () => {
               size="sm" 
               variant="ghost" 
               onClick={navigateNext}
-              className="p-1 sm:p-2 h-7 w-7"
+              className="p-0.5 h-6 w-6 min-w-0"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3" />
             </Button>
           </div>
           
@@ -782,7 +827,7 @@ const CalendarView: React.FC = () => {
               size="sm" 
               variant={currentView === 'day' ? 'default' : 'outline'} 
               onClick={() => changeView('day')}
-              className="rounded-none rounded-l-md"
+              className="rounded-none rounded-l-md px-1.5 h-6 min-h-0 text-xs"
             >
               Day
             </Button>
@@ -790,7 +835,7 @@ const CalendarView: React.FC = () => {
               size="sm" 
               variant={currentView === 'week' ? 'default' : 'outline'} 
               onClick={() => changeView('week')}
-              className="rounded-none border-l-0 border-r-0"
+              className="rounded-none border-l-0 border-r-0 px-1.5 h-6 min-h-0 text-xs"
             >
               Week
             </Button>
@@ -798,70 +843,65 @@ const CalendarView: React.FC = () => {
               size="sm" 
               variant={currentView === 'month' ? 'default' : 'outline'} 
               onClick={() => changeView('month')}
-              className="rounded-none rounded-r-md"
+              className="rounded-none rounded-r-md px-1.5 h-6 min-h-0 text-xs"
             >
               Month
             </Button>
           </div>
-        </div>
         
-        {/* Secondary Controls */}
-        <div className="flex items-center justify-between mt-2">
-          {/* Mobile Zoom Controls (Left) */}
-          <div className="flex gap-1">
-            {isMobile && (
-              <>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={handleZoomOut}
-                  className="px-2 h-7 min-w-7"
-                >
-                  <span className="text-lg">-</span>
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={handleZoomIn}
-                  className="px-2 h-7 min-w-7"
-                >
-                  <span className="text-lg">+</span>
-                </Button>
-              </>
-            )}
-          </div>
-          
-          {/* Resource/Event Controls (Right) */}
-          <div className="flex gap-1 ml-auto">
+          {/* Mobile Zoom Controls (inline with other controls) */}
+          {isMobile && (
+            <div className="flex gap-0.5">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleZoomOut}
+                className="px-1 h-6 w-6 min-h-0 min-w-0"
+              >
+                <span className="text-base">-</span>
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleZoomIn}
+                className="px-1 h-6 w-6 min-h-0 min-w-0"
+              >
+                <span className="text-base">+</span>
+              </Button>
+            </div>
+          )}
+        
+          {/* Resource/Event Controls */}
+          <div className="flex gap-0.5">
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowCalendarManagement(true)}
-              className="text-xs sm:text-sm h-7"
+              className="text-xs h-6 min-h-0 px-1.5"
             >
-              <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              View Calendars
+              <CalendarIcon className="w-3 h-3 mr-0.5" />
+              Calendars
             </Button>
             <Button
               size="sm"
               onClick={createNewEvent}
-              className="text-xs sm:text-sm h-7"
+              className="text-xs h-6 min-h-0 px-1.5"
             >
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              New Event
+              <Plus className="w-3 h-3 mr-0.5" />
+              New
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Calendar Container */}
+      {/* Calendar Container - Adjusted to account for smaller header */}
       <div 
         className="flex-1 min-h-0 w-full p-0 overflow-hidden relative flex flex-col" 
         style={{ 
           height: isMobile && currentView === 'day' 
-            ? 'calc(100vh - 180px)' // More space for day view on mobile
-            : 'calc(100vh - 110px)', // Standard height for other views
-          minHeight: isMobile && currentView === 'day' ? '700px' : '600px', // Increased minimum height for day view
+            ? 'calc(100vh - 150px)' // More space for day view on mobile with no title and smaller header
+            : 'calc(100vh - 85px)', // More space with smaller header
+          minHeight: isMobile && currentView === 'day' ? '700px' : '600px',
         }}
       >
         <div 
