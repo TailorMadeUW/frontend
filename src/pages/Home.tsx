@@ -55,35 +55,35 @@ const Home: React.FC = () => {
       id: 1, 
       type: 'reschedule', 
       person: 'Ellie', 
-      date: new Date(2024, 3, 25, 14, 0), // April 25, 2024, 2:00 PM
+      date: new Date(2025, 3, 25, 14, 0), // March 25, 2025, 2:00 PM
       initials: 'EK'
     },
     { 
       id: 2, 
       type: 'send', 
       item: 'AD', 
-      date: new Date(2024, 3, 17, 14, 0), // April 17, 2024, 2:00 PM
+      date: new Date(2025, 3, 17, 14, 0), // March 17, 2025, 2:00 PM
       initials: 'RP'
     },
     { 
       id: 3, 
       type: 'reschedule', 
       person: 'Michael', 
-      date: new Date(2024, 3, 20, 10, 0), // April 20, 2024, 10:00 AM
+      date: new Date(2025, 3, 20, 10, 0), // March 20, 2025, 10:00 AM
       initials: 'MS'
     },
     { 
       id: 4, 
       type: 'send', 
       item: 'Invoice', 
-      date: new Date(2024, 3, 22, 13, 30), // April 22, 2024, 1:30 PM
+      date: new Date(2025, 3, 22, 13, 30), // March 22, 2025, 1:30 PM
       initials: 'JD'
     },
     { 
       id: 5, 
       type: 'reschedule', 
       person: 'Sarah', 
-      date: new Date(2024, 3, 18, 15, 0), // April 18, 2024, 3:00 PM
+      date: new Date(2025, 3, 18, 15, 0), // March 18, 2025, 3:00 PM
       initials: 'SW'
     }
   ]);
@@ -359,7 +359,7 @@ const Home: React.FC = () => {
           <h2 className="text-lg font-medium mb-2">Calendar</h2>
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-medium">April 2024</h3>
+              <h3 className="font-medium">March 2025</h3>
               <button className="text-gray-500">
                 <Maximize2 size={18} />
               </button>

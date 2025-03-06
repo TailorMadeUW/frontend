@@ -28,11 +28,11 @@ const CalendarView: React.FC = () => {
   // Initialize with higher zoom level for mobile
   const getInitialZoomLevel = () => {
     const width = window.innerWidth;
-    if (width < 380) return 0.85;
-    if (width < 480) return 0.9;
-    if (width < 640) return 0.95;
-    if (width < 768) return 1.0;
-    if (width < 1024) return 1.05;
+    if (width < 380) return 0.75;
+    if (width < 480) return 0.8;
+    if (width < 640) return 0.85;
+    if (width < 768) return 0.9;
+    if (width < 1024) return 1.0;
     return 1.1;
   }
   
@@ -40,6 +40,7 @@ const CalendarView: React.FC = () => {
   const [newEventFormData, setNewEventFormData] = useState<Partial<Event> | null>(null)
   const [currentViewDate, setCurrentViewDate] = useState(new Date())
   const [currentView, setCurrentView] = useState<ViewType>(window.innerWidth < 640 ? 'day' : 'week')
+  const [userSelectedView, setUserSelectedView] = useState(false)
   
   // Define screen size breakpoints for responsive design
   const getScreenSizeClass = () => {
@@ -57,6 +58,8 @@ const CalendarView: React.FC = () => {
   useEffect(() => {
     const updateScreenSize = () => {
       setScreenSizeClass(getScreenSizeClass());
+      setIsMobile(window.innerWidth < 640);
+      setZoomLevel(getInitialZoomLevel());
     };
     
     window.addEventListener('resize', updateScreenSize);
@@ -100,59 +103,70 @@ const CalendarView: React.FC = () => {
   
   // Initial setup - ensure mobile devices start in day view
   useEffect(() => {
-    // This runs only once on component mount since we handle the currentView
-    // dependency by using a conditional check inside the effect
+    // This runs only once on component mount
     const isMobileDevice = window.innerWidth < 640;
     
-    // We use the initial state value directly instead of the currentView from the dependency
-    const initialViewType = isMobileDevice ? 'day' : 'week';
-    
-    // This will force the calendar to render with the correct view based on device
-    if (calendarRef.current) {
-      setTimeout(() => {
-        // Change to the appropriate view
-        calendarRef.current.getInstance().changeView(initialViewType);
-        setCurrentView(initialViewType);
-        
-        // If it's mobile and day view, also set the appropriate hour range
-        if (isMobileDevice && initialViewType === 'day') {
-          calendarRef.current.getInstance().setOptions({
-            week: {
-              hourStart: 0,  // Show full 24 hours
-              hourEnd: 24,   // Show full 24 hours
-            }
-          });
+    // On initial load, always set the appropriate view based on device size
+    // but only if the user hasn't manually selected a view
+    if (!userSelectedView) {
+      const initialViewType = isMobileDevice ? 'day' : 'week';
+      
+      // This will force the calendar to render with the correct view based on device
+      if (calendarRef.current) {
+        setTimeout(() => {
+          // Change to the appropriate view
+          calendarRef.current.getInstance().changeView(initialViewType);
+          setCurrentView(initialViewType);
           
-          // Force a re-render to update the layout
-          calendarRef.current.getInstance().render();
-        }
-      }, 200);
+          // If it's mobile and day view, also set the appropriate hour range
+          if (isMobileDevice && initialViewType === 'day') {
+            calendarRef.current.getInstance().setOptions({
+              week: {
+                hourStart: 0,  // Show full 24 hours
+                hourEnd: 24,   // Show full 24 hours
+              }
+            });
+            
+            // Force a re-render to update the layout
+            calendarRef.current.getInstance().render();
+          }
+        }, 200);
+      }
     }
-  }, [calendarRef]); // Only depend on calendarRef, not currentView
+  }, [calendarRef, userSelectedView]);
   
   // Handle mobile view change
   useEffect(() => {
     const handleViewportChange = () => {
       const mobile = window.innerWidth < 640;
-      // Only change view type if it's currently day or week
-      if (mobile && (currentView === 'week')) {
-        changeView('day');
-      } else if (!mobile && (currentView === 'day')) {
-        changeView('week');
+      
+      // Only auto-switch views if the user hasn't manually selected one
+      if (!userSelectedView) {
+        // When switching from desktop to mobile, set to day view
+        if (mobile && !isMobile && currentView !== 'day') {
+          changeView('day');
+        } else if (!mobile && (currentView === 'day')) {
+          changeView('week');
+        }
       }
+      
+      // Update the mobile state
+      setIsMobile(mobile);
     };
     
     window.addEventListener('resize', handleViewportChange);
     return () => window.removeEventListener('resize', handleViewportChange);
-  }, [currentView, changeView]);
+  }, [currentView, changeView, isMobile, userSelectedView]);
   
-  // Ensure correct view is set on initial render
+  // Ensure correct view is set on initial render only
   useEffect(() => {
     // Check if we need to adjust the view when calendar is ready
-    if (calendarRef.current) {
+    if (calendarRef.current && !userSelectedView) {
       // Small delay to allow calendar to fully initialize
       setTimeout(() => {
         const mobile = window.innerWidth < 640;
+        
+        // On first load, use day view for mobile, but only if user hasn't selected a view
         if (mobile && currentView !== 'day') {
           changeView('day');
         } else if (!mobile && currentView !== 'week') {
@@ -160,7 +174,7 @@ const CalendarView: React.FC = () => {
         }
       }, 100);
     }
-  }, [calendarRef, changeView, currentView]);
+  }, [calendarRef, changeView, currentView, userSelectedView]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -309,6 +323,8 @@ const CalendarView: React.FC = () => {
           
           // Make sure we're in day view (easier to see the specific event)
           if (window.innerWidth < 640) {
+            // This is a programmatic change, not user-initiated
+            setUserSelectedView(false);
             changeView('day')
           }
         }
@@ -578,8 +594,17 @@ const CalendarView: React.FC = () => {
   // Navigate to today
   const navigateToday = () => {
     if (calendarRef.current) {
+      // When navigating to today, reset the userSelectedView to allow automatic view switching
+      setUserSelectedView(false);
       const instance = calendarRef.current.getInstance()
       instance.today()
+      
+      // Auto-select day view on mobile, week view on desktop
+      if (window.innerWidth < 640 && currentView !== 'day') {
+        changeView('day');
+      } else if (window.innerWidth >= 640 && currentView !== 'week') {
+        changeView('week');
+      }
     }
   }
 
@@ -826,7 +851,10 @@ const CalendarView: React.FC = () => {
             <Button 
               size="sm" 
               variant={currentView === 'day' ? 'default' : 'outline'} 
-              onClick={() => changeView('day')}
+              onClick={() => {
+                setUserSelectedView(true);
+                changeView('day');
+              }}
               className="rounded-none rounded-l-md px-1.5 h-6 min-h-0 text-xs"
             >
               Day
@@ -834,7 +862,10 @@ const CalendarView: React.FC = () => {
             <Button 
               size="sm" 
               variant={currentView === 'week' ? 'default' : 'outline'} 
-              onClick={() => changeView('week')}
+              onClick={() => {
+                setUserSelectedView(true);
+                changeView('week');
+              }}
               className="rounded-none border-l-0 border-r-0 px-1.5 h-6 min-h-0 text-xs"
             >
               Week
@@ -842,7 +873,10 @@ const CalendarView: React.FC = () => {
             <Button 
               size="sm" 
               variant={currentView === 'month' ? 'default' : 'outline'} 
-              onClick={() => changeView('month')}
+              onClick={() => {
+                setUserSelectedView(true);
+                changeView('month');
+              }}
               className="rounded-none rounded-r-md px-1.5 h-6 min-h-0 text-xs"
             >
               Month
@@ -905,21 +939,19 @@ const CalendarView: React.FC = () => {
         }}
       >
         <div 
-          className={`flex-1 w-full h-full ${isMobile && currentView === 'day' ? 'pt-2 px-1' : ''}`}
+          className={`flex-1 w-full h-full ${isMobile ? 'pt-2' : ''}`}
           style={{ 
             transform: `scale(${zoomLevel})`, 
-            transformOrigin: 'top left',
-            width: isMobile ? `${Math.max(130, 110 + (zoomLevel * 30)) / zoomLevel}%` : '100%',  // Dynamic width based on zoom
+            transformOrigin: isMobile ? 'left top' : 'top left',
+            width: isMobile 
+              ? currentView === 'day' 
+                ? `${100 / zoomLevel}%`  // Day view - 100% width scaled
+                : `${Math.min(120, 100 / zoomLevel)}%`  // Week/month view - limited width increase
+              : '100%',
             height: isMobile && currentView === 'day' ? `${Math.max(140, 120 + (zoomLevel * 30)) / zoomLevel}%` : '100%', // Dynamic height based on zoom
             // Adjusted to ensure no content is cut off from left
-            marginLeft: screenSizeClass === 'xs' 
-              ? '0px' 
-              : screenSizeClass === 'sm' 
-                ? '0px' 
-                : screenSizeClass === 'md' 
-                  ? '0px' 
-                  : '0',
-            paddingLeft: screenSizeClass === 'xs' ? '4px' : screenSizeClass === 'sm' ? '3px' : '0',
+            marginLeft: '0px',
+            paddingLeft: screenSizeClass === 'xs' ? '2px' : '0',
           }}
         >
           <Calendar
