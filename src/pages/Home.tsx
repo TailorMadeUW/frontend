@@ -17,8 +17,8 @@ interface Action {
 const Home: React.FC = () => {
   // Mock data for today's projects
   const [todaysProjects, setTodaysProjects] = useState([
-    { id: 1, name: 'Linda Top Fitting', progress: 75 },
-    { id: 2, name: 'Linda Top Fitting', progress: 75 },
+    { id: 1, name: 'Hang Top Fitting', progress: 75 },
+    { id: 2, name: 'Tia Wedding Fitting', progress: 50 },
     { id: 3, name: 'Mark Suit Alteration', progress: 45 },
     { id: 4, name: 'Sarah Wedding Dress', progress: 30 },
   ]);

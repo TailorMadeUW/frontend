@@ -222,7 +222,6 @@ const CalendarView: React.FC = () => {
         notes: event.notes || '',
         state: event.state || 'busy'
       } as EventObject
-      console.log('Formatted event:', JSON.stringify(formattedEvent, null, 2))
       return formattedEvent
     })
     return formattedEvents
