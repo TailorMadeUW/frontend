@@ -204,7 +204,7 @@ const CalendarView: React.FC = () => {
   }
 
   const formatEvents = (events: Event[]) => {
-    console.log('Formatting events:', events, calendars)
+    console.log('Formatting events:', events)
     const formattedEvents = events.filter(event => {
 
       // This logic is not working properly right now so comment it out

@@ -148,17 +148,14 @@ const ChatWidget: React.FC = () => {
   const createEvent = async (eventData: EventData) => {
     const eventDate = new Date(eventData.date)
     
-    // Calculate end time based on duration (in minutes)
-    const endDate = new Date(eventDate.getTime() + eventData.duration * 60000)
-    
+    // Calculate end time based on duration (in minutes)    
     const newEvent = {
+      ...eventData,
       id: uuidv4(),
       title: `Fitting: ${eventData.clientName}`,
       start: eventDate,
-      end: endDate,
       calendarId: calendars.length > 0 ? calendars[0].id : 'cal1', // Use first available calendar
       description: eventData.notes,
-      location: '',
       allDay: false,
       state: 'busy' as const
     }
