@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageLayout from '../components/PageLayout';
 import { Check, X, ChevronDown, ChevronUp, Calendar as CalendarIcon, Maximize2 } from 'lucide-react';
 import { format } from 'date-fns';
+import useProjectServerStore from '../stores/projectServerStore';
+import { Project } from '../types';
 
 // Define Action type for better type safety
 interface Action {
@@ -15,13 +17,37 @@ interface Action {
 }
 
 const Home: React.FC = () => {
-  // Mock data for today's projects
-  const [todaysProjects, setTodaysProjects] = useState([
-    { id: 1, name: 'Linda Top Fitting', progress: 75 },
-    { id: 2, name: 'Linda Top Fitting', progress: 75 },
-    { id: 3, name: 'Mark Suit Alteration', progress: 45 },
-    { id: 4, name: 'Sarah Wedding Dress', progress: 30 },
-  ]);
+  // Get projects from the store
+  const { projects, isLoading, fetchProjects } = useProjectServerStore();
+  
+  // Modified state for today's projects with progress added
+  const [todaysProjects, setTodaysProjects] = useState<Array<{ id: string; name: string; progress: number; clientName: string }>>([]);
+  
+  // Fetch projects when component mounts
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+  
+  // Calculate today's projects whenever projects change
+  useEffect(() => {
+    if (projects.length > 0) {
+      // Show all projects with randomly generated progress values
+      const projectsWithProgress = projects
+        .map(project => {
+          // Generate a random progress value in increments of 5% (1/20th of 100)
+          const randomProgress = Math.floor(Math.random() * 21) * 5; // 0, 5, 10, ..., 95, 100
+          
+          return {
+            id: project.id,
+            name: project.name,
+            progress: randomProgress,
+            clientName: project.clientName
+          };
+        });
+      
+      setTodaysProjects(projectsWithProgress);
+    }
+  }, [projects]);
 
   // Move mock data into state for interactivity
   const [actions, setActions] = useState<Action[]>([
@@ -150,44 +176,70 @@ const Home: React.FC = () => {
 
   return (
     <PageLayout title="Dashboard">
-      <div className="flex-1 px-4 pb-6 space-y-6">
+      <div className="flex-1 px-4 pb-6 space-y-6 overflow-y-auto h-full">
         
         {/* Today's Projects */}
         <section>
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-medium">Todays Projects</h2>
-            <button 
-              onClick={() => toggleSectionExpand('projects')}
-              className="text-blue-600 text-sm"
-            >
-              {expandedSections.projects ? "Collapse" : "View All"}
-            </button>
+            <h2 className="text-lg font-medium">Current Projects</h2>
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => fetchProjects()}
+                className="text-gray-600 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50"
+                disabled={isLoading}
+                title="Refresh projects"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+              <button 
+                onClick={() => toggleSectionExpand('projects')}
+                className="text-blue-600 text-sm"
+              >
+                {expandedSections.projects ? "Collapse" : "View All"}
+              </button>
+            </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4 relative">
-            <div 
-              className="space-y-4 relative overflow-hidden" 
-              style={{ 
-                maxHeight: !expandedSections.projects && todaysProjects.length > 2 
-                  ? 'calc(2 * 50px + 16px)' // Height for 2 projects
-                  : '2000px', // Use a very large value instead of 'auto' for smoother animation
-                transition: 'max-height 0.3s ease-in-out'
-              }}
-            >
-              {getVisibleProjects().map(project => (
-                <div key={project.id} className="pb-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">{project.name}</span>
-                    <span className="text-gray-600">%{project.progress}</span>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                <span className="ml-2 text-gray-600">Loading projects...</span>
+              </div>
+            ) : todaysProjects.length > 0 ? (
+              <div 
+                className="space-y-4 relative overflow-hidden" 
+                style={{ 
+                  maxHeight: !expandedSections.projects && todaysProjects.length > 2 
+                    ? 'calc(2 * 50px + 16px)' // Height for 2 projects
+                    : '2000px', // Use a very large value instead of 'auto' for smoother animation
+                  transition: 'max-height 0.3s ease-in-out'
+                }}
+              >
+                {getVisibleProjects().map(project => (
+                  <div key={project.id} className="pb-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <div>
+                        <span className="font-medium">{project.name}</span>
+                        <div className="text-xs text-gray-500">for {project.clientName}</div>
+                      </div>
+                      <span className="text-gray-600">{project.progress}%</span>
+                    </div>
+                    <div className="w-full bg-blue-100 rounded-full h-2.5">
+                      <div 
+                        className="bg-blue-300 h-2.5 rounded-full" 
+                        style={{ width: `${project.progress}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-blue-100 rounded-full h-2.5">
-                    <div 
-                      className="bg-blue-300 h-2.5 rounded-full" 
-                      style={{ width: `${project.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-4 text-center text-gray-600">
+                No projects due in the next week.
+              </div>
+            )}
             
             {/* Shadow overlay for projects when not expanded */}
             {todaysProjects.length > 2 && !expandedSections.projects && (
@@ -387,18 +439,6 @@ const Home: React.FC = () => {
             </div>
           </div>
         </section>
-        
-        {/* Floating action button */}
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2">
-          <button className="bg-gray-200 rounded-full p-4 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6.08 10.62A4 4 0 0 0 6 11a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4 4 4 0 0 0-4-4h-4" />
-              <path d="M6 11V9a4 4 0 0 1 4-4h2" />
-              <line x1="15" y1="5" x2="15" y2="7" />
-              <line x1="12" y1="5" x2="12" y2="7" />
-            </svg>
-          </button>
-        </div>
       </div>
     </PageLayout>
   );
