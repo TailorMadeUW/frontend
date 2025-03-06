@@ -325,7 +325,7 @@ const ChatWidget: React.FC = () => {
       <img 
         src={chatUploadIcon} 
         alt="Chat" 
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full transition-all cursor-pointer"
         onClick={() => setIsOpen(true)}
       />
 

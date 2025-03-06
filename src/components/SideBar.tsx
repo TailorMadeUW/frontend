@@ -152,7 +152,7 @@ const SideBar: React.FC = () => {
       {/* Mobile Navbar and Slide-out Panel */}
       <div className="lg:hidden">
         {/* Top Navbar */}
-        <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b shadow-sm flex items-center justify-between px-4 z-20">
+        <div className="fixed top-0 left-0 right-0 h-16 border-b shadow-sm flex items-center justify-between px-4 z-20">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMobileMenuOpen(true)}

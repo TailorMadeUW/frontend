@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import PageHeader from '../components/PageHeader';
+import PageLayout from '../components/PageLayout';
 import { Check, X, ChevronDown, ChevronUp, Calendar as CalendarIcon, Maximize2 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -149,8 +149,7 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col flex-1 h-full overflow-auto bg-gray-50">
-      <PageHeader title="Dashboard" />
+    <PageLayout title="Dashboard">
       <div className="flex-1 px-4 pb-6 space-y-6">
         
         {/* Today's Projects */}
@@ -401,7 +400,7 @@ const Home: React.FC = () => {
           </button>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

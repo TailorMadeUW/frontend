@@ -19,8 +19,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title }) => {
   ]
 
   return (
-    <header className="flex-none flex justify-between items-center p-6 bg-white border-b">
-      <h1 className="text-2xl font-semibold">{title}</h1>
+    <header className="flex-none flex justify-between items-center p-3 sm:p-4 md:p-6">
+      <h1 className="text-xl sm:text-2xl font-semibold">{title}</h1>
       
       {/* Header items - visible only on desktop */}
       <div className="hidden lg:flex items-center gap-4">
@@ -28,7 +28,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title }) => {
           <Link
             key={item.path}
             to={item.path}
-            className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+            className="relative p-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
           >
             <item.icon className="w-5 h-5" />
             {item.badge && (
@@ -44,7 +44,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title }) => {
           <button
             onClick={toggleOpen}
             className={cn(
-              "relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors",
+              "relative p-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors",
               isOpen && "text-blue-600 bg-blue-50"
             )}
           >

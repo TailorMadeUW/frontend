@@ -82,7 +82,7 @@ export const CreateCalendarDialog: React.FC<CreateCalendarDialogProps> = ({
       <DialogContent className="max-w-2xl bg-white p-0" hideCloseButton={true}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader className="px-6 py-4 pb-2 border-b">
-            <DialogTitle className="text-2xl text-gray-700 font-medium flex items-center justify-between">
+            <DialogTitle className="text-xl sm:text-2xl text-gray-700 font-medium flex items-center justify-between">
               <span>Create New Calendar</span>
               <Button variant="ghost" size="icon" onClick={handleClose} className="hover:bg-gray-100 rounded-full">
                 <X className="h-4 w-4 text-gray-500" />
