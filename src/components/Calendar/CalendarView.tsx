@@ -32,7 +32,7 @@ const CalendarView: React.FC = () => {
     if (width < 480) return 0.8;
     if (width < 640) return 0.85;
     if (width < 768) return 0.9;
-    if (width < 1024) return 1.0;
+    if (width < 1024) return 0.95;
     return 1.1;
   }
   
@@ -199,8 +199,13 @@ const CalendarView: React.FC = () => {
     }
     
     window.addEventListener('resize', handleResize)
-    handleResize() // Call initially to set the correct zoom level
-    return () => window.removeEventListener('resize', handleResize)
+    
+    // Call once on mount to set initial values
+    handleResize()
+    
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
   }, [])
 
   // Set up event handlers when calendar is mounted
@@ -929,29 +934,23 @@ const CalendarView: React.FC = () => {
       </div>
 
       {/* Calendar Container - Adjusted to account for smaller header */}
-      <div 
-        className="flex-1 min-h-0 w-full p-0 overflow-hidden relative flex flex-col" 
-        style={{ 
+      <div
+        className="flex-1 w-full relative overflow-auto"
+        style={{
           height: isMobile && currentView === 'day' 
             ? 'calc(100vh - 150px)' // More space for day view on mobile with no title and smaller header
             : 'calc(100vh - 85px)', // More space with smaller header
           minHeight: isMobile && currentView === 'day' ? '700px' : '600px',
         }}
       >
+        {/* Use a container div that can be scrolled when the calendar is scaled */}
         <div 
-          className={`flex-1 w-full h-full ${isMobile ? 'pt-2' : ''}`}
+          className={`w-full h-full inline-block ${isMobile ? 'pt-2' : ''}`}
           style={{ 
             transform: `scale(${zoomLevel})`, 
-            transformOrigin: isMobile ? 'left top' : 'top left',
-            width: isMobile 
-              ? currentView === 'day' 
-                ? `${100 / zoomLevel}%`  // Day view - 100% width scaled
-                : `${Math.min(120, 100 / zoomLevel)}%`  // Week/month view - limited width increase
-              : '100%',
+            transformOrigin: 'top left',
+            width: `${100 / zoomLevel}%`,  // This counters the scale effect to maintain full width
             height: isMobile && currentView === 'day' ? `${Math.max(140, 120 + (zoomLevel * 30)) / zoomLevel}%` : '100%', // Dynamic height based on zoom
-            // Adjusted to ensure no content is cut off from left
-            marginLeft: '0px',
-            paddingLeft: screenSizeClass === 'xs' ? '2px' : '0',
           }}
         >
           <Calendar

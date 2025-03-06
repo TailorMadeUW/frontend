@@ -65,13 +65,27 @@ const SideBar: React.FC = () => {
     }
   ]
 
-  const SidebarContent = ({ includeHeaderItems = false }) => (
+  const SidebarContent = ({ includeHeaderItems = false }) => {
+    // Add isMobile check to detect if we're in a mobile context
+    const isMobile = window.innerWidth < 1024; // lg breakpoint
+    
+    return (
     <>
-      <div className="px-4 mb-6 flex items-center gap-2">
+      <div className={`px-4 ${isMobile ? 'mb-4' : 'mb-6'} flex items-center gap-2`}>
         <Link to="/app/home" className="flex items-center gap-2">
-          <img src={TailorMadeLogo} alt="TailorMade Logo" className="w-8 h-8" />
-          <span className="text-lg font-semibold text-blue-600">TailorMade</span>
+          <img src={TailorMadeLogo} alt="TailorMade Logo" className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} />
+          <span className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-blue-600`}>TailorMade</span>
         </Link>
+      </div>
+
+      <div className={`${isMobile ? 'px-3 mt-3 mb-2' : 'px-4 mt-4'} flex gap-2`}>
+        {calendars.map(calendar => (
+          <div 
+            key={calendar.id} 
+            className={`rounded-full ${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} 
+            style={{ backgroundColor: calendar.color }}
+          />
+        ))}
       </div>
       
       {menuItems.map((item) => (
@@ -79,29 +93,31 @@ const SideBar: React.FC = () => {
           key={item.path}
           to={item.path}
           className={cn(
-            'w-full px-4 py-2 flex items-center gap-3 cursor-pointer',
+            'w-full flex items-center gap-3 cursor-pointer',
+            isMobile ? 'px-3 py-1.5' : 'px-4 py-2',
             location.pathname === item.path ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'
           )}
           onClick={() => setIsMobileMenuOpen(false)}
         >
-          <item.icon className="w-5 h-5" />
-          <span>{item.label}</span>
+          <item.icon className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+          <span className={isMobile ? 'text-sm' : ''}>{item.label}</span>
         </Link>
       ))}
       
       {includeHeaderItems && (
         <>
-          <div className="mt-6 mb-2 px-4 text-sm font-medium text-gray-500">
+          <div className={`${isMobile ? 'mt-4 mb-1 px-3' : 'mt-6 mb-2 px-4'} text-sm font-medium text-gray-500`}>
             Settings & Profile
           </div>
           {headerItems
-            .filter(item => item.label === 'Settings') // Only show Settings in the menu
+            .filter(item => item.label === 'Settings' || item.label === 'Profile') // Show both Settings and Profile in the menu
             .map((item) => (
               <Link 
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'w-full px-4 py-2 flex items-center gap-3 cursor-pointer relative',
+                  'w-full flex items-center gap-3 cursor-pointer relative',
+                  isMobile ? 'px-3 py-1.5' : 'px-4 py-2',
                   location.pathname === item.path ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'
                 )}
                 onClick={(e) => {
@@ -112,10 +128,10 @@ const SideBar: React.FC = () => {
                   }
                 }}
               >
-                <item.icon className="w-5 h-5" />
-                <span>{item.label}</span>
+                <item.icon className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                <span className={isMobile ? 'text-sm' : ''}>{item.label}</span>
                 {item.badge && (
-                  <span className="absolute right-4 bg-red-500 text-white text-xs rounded-full px-1.5 min-w-5 h-5 flex items-center justify-center">
+                  <span className={`absolute right-4 bg-red-500 text-white text-xs rounded-full px-1.5 min-w-5 ${isMobile ? 'h-4' : 'h-5'} flex items-center justify-center`}>
                     {item.badge}
                   </span>
                 )}
@@ -124,25 +140,17 @@ const SideBar: React.FC = () => {
         </>
       )}
 
-      <div 
-        className="mt-auto px-4 py-2 w-full flex items-center gap-3 cursor-pointer hover:bg-gray-100"
+      {/* <div 
+        className={`mt-auto w-full flex items-center gap-3 cursor-pointer hover:bg-gray-100 
+        ${isMobile ? 'px-3 py-1.5' : 'px-4 py-2'}`}
         onDoubleClick={() => setShowAdminPanel(true)}
       >
-        <Terminal className="w-5 h-5" />
-        <span>Admin Testing (DELETE LATER)</span>
-      </div>
-
-      <div className="px-4 mt-4 flex gap-2">
-        {calendars.map(calendar => (
-          <div 
-            key={calendar.id} 
-            className="w-4 h-4 rounded-full" 
-            style={{ backgroundColor: calendar.color }}
-          />
-        ))}
-      </div>
+        <Terminal className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+        <span className={isMobile ? 'text-sm' : ''}>Admin Testing (DELETE LATER)</span>
+      </div> */}
     </>
   )
+}
 
   return (
     <>
@@ -154,17 +162,17 @@ const SideBar: React.FC = () => {
       {/* Mobile Navbar and Slide-out Panel */}
       <div className="lg:hidden">
         {/* Top Navbar */}
-        <div className="fixed top-0 left-0 right-0 h-16 border-b shadow-sm flex items-center justify-between px-4 z-20">
+        <div className="fixed top-0 left-0 right-0 h-14 border-b shadow-sm flex items-center justify-between px-3 z-20">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 hover:bg-gray-100 rounded-lg"
+              className="p-1.5 hover:bg-gray-100 rounded-lg"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5" />
             </button>
-            <Link to="/app/home" className="flex items-center gap-2">
-              <img src={TailorMadeLogo} alt="TailorMade Logo" className="w-6 h-6" />
-              <span className="text-lg font-semibold text-blue-600">TailorMade</span>
+            <Link to="/app/home" className="flex items-center gap-1.5">
+              <img src={TailorMadeLogo} alt="TailorMade Logo" className="w-5 h-5" />
+              <span className="text-base font-semibold text-blue-600">TailorMade</span>
             </Link>
           </div>
           
@@ -174,16 +182,16 @@ const SideBar: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className="relative p-2 text-gray-600 hover:text-blue-600 rounded-full transition-colors"
+                className="relative p-1.5 text-gray-600 hover:text-blue-600 rounded-full transition-colors"
                 onClick={(e) => {
                   if (item.onClick) {
                     item.onClick(e);
                   }
                 }}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className="w-4 h-4" />
                 {item.badge && (
-                  <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 bg-red-500 text-white text-xs rounded-full">
+                  <span className="absolute top-0 right-0 flex items-center justify-center w-3.5 h-3.5 bg-red-500 text-white text-[10px] rounded-full">
                     {item.badge}
                   </span>
                 )}
@@ -206,17 +214,17 @@ const SideBar: React.FC = () => {
           />
           
           {/* Panel */}
-          <div className="absolute top-0 left-0 bottom-0 w-64 bg-white shadow-xl flex flex-col">
-            <div className="p-4 flex justify-between items-center border-b">
-              <span className="text-lg font-semibold">Menu</span>
+          <div className="absolute top-0 left-0 bottom-0 w-56 bg-white shadow-xl flex flex-col">
+            <div className="p-3 flex justify-between items-center border-b">
+              <span className="text-base font-semibold">Menu</span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-1.5 hover:bg-gray-100 rounded-lg"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex-1 py-6">
+            <div className="flex-1 py-4">
               <SidebarContent includeHeaderItems={true} />
             </div>
           </div>
