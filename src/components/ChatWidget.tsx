@@ -95,7 +95,7 @@ const ChatWidget: React.FC = () => {
 
     try {
       // Use the simplified API service
-      const apiResponse = await api.note.upload(file);
+      const apiResponse = await api.note.appointment(file);
       
       // Extract the event data from the response
       const eventData: EventData = apiResponse.data;

@@ -42,4 +42,5 @@ export interface Project {
   clientName: string
   clientCost: number
   dueDate: Date
+  appointments: Event[]
 }

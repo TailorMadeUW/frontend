@@ -14,12 +14,12 @@ const API_BASE_URL = import.meta.env.PROD
  */
 export const noteApi = {
   // Upload a note image for analysis
-  upload: async (file: File) => {
+  appointment: async (file: File) => {
     try {
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch(`${API_BASE_URL}/agent/upload`, {
+      const response = await fetch(`${API_BASE_URL}/agent/appointment`, {
         method: 'POST',
         body: formData,
         // Allow credentials for CORS
@@ -53,6 +53,93 @@ export const noteApi = {
             notes: "Client requested slim fit suit with modern lapels. Previous measurements need updating due to recent weight change.",
             measurements: "Chest: 42\", Waist: 34\", Inseam: 32\""
           },
+          error: null
+        };
+      }
+      
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+  project: async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(`${API_BASE_URL}/agent/project`, {
+        method: 'POST',
+        body: formData,
+        // Allow credentials for CORS
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Note upload failed:', error);
+      
+      // In development, provide mock data
+      if (!import.meta.env.PROD) {
+        console.log('Using mock data due to API error');
+        return {
+          success: true,
+          data: [
+            {
+              name: "Natalia's Bridal Alterations",
+              description: "Alterations required for bridal dress as per client's request.",
+              clientName: "Natalia",
+              clientCost: 0,
+              dueDate: "2025-06-12",
+              appointments: [
+                {
+                  clientName: "Natalia",
+                  date: "2025-03-07T16:30:00",
+                  duration: 90,
+                  tailor: "Daylon",
+                  appointmentsNeeded: 3,
+                  inventoryNeeded: "Bridal accessories for fitting",
+                  measurements: "Standard bridal measurements",
+                  notes: "First fitting session to evaluate overall fit and adjustments needed based on the initial estimates.",
+                  description: "Initial fitting appointment for bridal dress alterations based on initial notes and evaluations.",
+                  location: "Fitting room 1"
+                },
+                {
+                  clientName: "Natalia",
+                  date: "2025-04-10T14:00:00",
+                  duration: 60,
+                  tailor: "Daylon",
+                  appointmentsNeeded: 2,
+                  inventoryNeeded: "Altered bridal dress, new fabric if needed",
+                  measurements: "To confirm and modify as needed during fitting",
+                  notes: "Follow-up fitting to assess adjustments made after first fitting, possible adjustments based on client feedback.",
+                  description: "Follow-up fitting appointment to check on alterations made and any new required changes for the bridal dress.",
+                  location: "Fitting room 2"
+                },
+                {
+                  clientName: "Natalia",
+                  date: "2025-05-15T15:00:00",
+                  duration: 75,
+                  tailor: "Daylon",
+                  appointmentsNeeded: 1,
+                  inventoryNeeded: "Finalized bridal dress",
+                  measurements: "Final measurement check before wedding day",
+                  notes: "Final fitting to ensure all alterations are completed and the dress fits perfectly before the wedding.",
+                  description: "Final fitting session for bridal dress to confirm all adjustments are satisfactory and ready for the wedding day.",
+                  location: "Fitting room 3"
+                }
+              ]
+            }
+          ],
           error: null
         };
       }
