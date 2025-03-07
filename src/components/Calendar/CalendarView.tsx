@@ -10,6 +10,7 @@ import { Event } from '../../types'
 import type { EventObject, Options, ViewType } from '@toast-ui/calendar'
 import { Button } from '../ui/button'
 import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
+import { isValid } from 'date-fns'
 
 type CalendarEvent = Omit<Event, 'id'> & { id?: string }
 
@@ -23,56 +24,188 @@ const CalendarView: React.FC = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [zoomLevel, setZoomLevel] = useState(isMobile ? 0.6 : 1)
+  
+  // Initialize with higher zoom level for mobile
+  const getInitialZoomLevel = () => {
+    const width = window.innerWidth;
+    if (width < 380) return 0.75;
+    if (width < 480) return 0.8;
+    if (width < 640) return 0.85;
+    if (width < 768) return 0.9;
+    if (width < 1024) return 0.95;
+    return 1.1;
+  }
+  
+  const [zoomLevel, setZoomLevel] = useState(getInitialZoomLevel())
   const [newEventFormData, setNewEventFormData] = useState<Partial<Event> | null>(null)
   const [currentViewDate, setCurrentViewDate] = useState(new Date())
-  const [currentView, setCurrentView] = useState<ViewType>('week')
+  const [currentView, setCurrentView] = useState<ViewType>(window.innerWidth < 640 ? 'day' : 'week')
+  const [userSelectedView, setUserSelectedView] = useState(false)
   
+  // Define screen size breakpoints for responsive design
+  const getScreenSizeClass = () => {
+    const width = window.innerWidth;
+    if (width < 480) return 'xs'; // Extra small
+    if (width < 640) return 'sm'; // Small mobile
+    if (width < 768) return 'md'; // Medium (tablet)
+    if (width < 1024) return 'lg'; // Large (tablet landscape)
+    return 'xl'; // Desktop
+  }
+  
+  const [screenSizeClass, setScreenSizeClass] = useState(getScreenSizeClass());
+  
+  // Update screen size class on resize
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 640
-      if (mobile !== isMobile) {
-        setIsMobile(mobile)
-        if (calendarRef.current) {
-          const instance = calendarRef.current.getInstance()
-          instance.setOptions({
-            week: {
-              ...instance.getOptions().week,
-              dayNames: mobile 
-                ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-                : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-            },
-            month: {
-              ...instance.getOptions().month,
-              dayNames: mobile 
-                ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-                : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-            }
-          })
-        }
+    const updateScreenSize = () => {
+      setScreenSizeClass(getScreenSizeClass());
+      setIsMobile(window.innerWidth < 640);
+      setZoomLevel(getInitialZoomLevel());
+    };
+    
+    window.addEventListener('resize', updateScreenSize);
+    return () => window.removeEventListener('resize', updateScreenSize);
+  }, []);
+  
+  // Define changeView function early using useCallback
+  const changeView = React.useCallback((viewType: ViewType) => {
+    if (calendarRef.current) {
+      // First change the view type
+      calendarRef.current.getInstance().changeView(viewType)
+      setCurrentView(viewType)
+      
+      // Then adjust the calendar instance for the new view
+      if (viewType === 'day' && isMobile) {
+        // Optimize for day view on mobile
+        calendarRef.current.getInstance().setOptions({
+          week: {
+            hourStart: 0,  // Show full 24 hours
+            hourEnd: 24,   // Show full 24 hours
+          }
+        });
+        
+        // Force a re-render after a brief delay to ensure layout adjusts
+        setTimeout(() => {
+          if (calendarRef.current) {
+            calendarRef.current.getInstance().render();
+          }
+        }, 100);
+      } else {
+        // Reset to normal settings for other views
+        calendarRef.current.getInstance().setOptions({
+          week: {
+            hourStart: 0,
+            hourEnd: 24,
+          }
+        });
       }
     }
+  }, [calendarRef, isMobile]);
+  
+  // Initial setup - ensure mobile devices start in day view
+  useEffect(() => {
+    // This runs only once on component mount
+    const isMobileDevice = window.innerWidth < 640;
+    
+    // On initial load, always set the appropriate view based on device size
+    // but only if the user hasn't manually selected a view
+    if (!userSelectedView) {
+      const initialViewType = isMobileDevice ? 'day' : 'week';
+      
+      // This will force the calendar to render with the correct view based on device
+      if (calendarRef.current) {
+        setTimeout(() => {
+          // Change to the appropriate view
+          calendarRef.current.getInstance().changeView(initialViewType);
+          setCurrentView(initialViewType);
+          
+          // If it's mobile and day view, also set the appropriate hour range
+          if (isMobileDevice && initialViewType === 'day') {
+            calendarRef.current.getInstance().setOptions({
+              week: {
+                hourStart: 0,  // Show full 24 hours
+                hourEnd: 24,   // Show full 24 hours
+              }
+            });
+            
+            // Force a re-render to update the layout
+            calendarRef.current.getInstance().render();
+          }
+        }, 200);
+      }
+    }
+  }, [calendarRef, userSelectedView]);
+  
+  // Handle mobile view change
+  useEffect(() => {
+    const handleViewportChange = () => {
+      const mobile = window.innerWidth < 640;
+      
+      // Only auto-switch views if the user hasn't manually selected one
+      if (!userSelectedView) {
+        // When switching from desktop to mobile, set to day view
+        if (mobile && !isMobile && currentView !== 'day') {
+          changeView('day');
+        } else if (!mobile && (currentView === 'day')) {
+          changeView('week');
+        }
+      }
+      
+      // Update the mobile state
+      setIsMobile(mobile);
+    };
+    
+    window.addEventListener('resize', handleViewportChange);
+    return () => window.removeEventListener('resize', handleViewportChange);
+  }, [currentView, changeView, isMobile, userSelectedView]);
+  
+  // Ensure correct view is set on initial render only
+  useEffect(() => {
+    // Check if we need to adjust the view when calendar is ready
+    if (calendarRef.current && !userSelectedView) {
+      // Small delay to allow calendar to fully initialize
+      setTimeout(() => {
+        const mobile = window.innerWidth < 640;
+        
+        // On first load, use day view for mobile, but only if user hasn't selected a view
+        if (mobile && currentView !== 'day') {
+          changeView('day');
+        } else if (!mobile && currentView !== 'week') {
+          changeView('week');
+        }
+      }, 100);
+    }
+  }, [calendarRef, changeView, currentView, userSelectedView]);
 
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [isMobile])
-
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 640
-      const extraSmallScreen = window.innerWidth < 380
+      // Get appropriate zoom level based on screen size
+      let newZoomLevel = 1;
+      const width = window.innerWidth;
       
-      if (mobile) {
-        setZoomLevel(extraSmallScreen ? 0.55 : 0.6)
-      } else {
-        setZoomLevel(1)
+      if (width < 380) {
+        newZoomLevel = 0.75; // Extra small screens - increased from 0.55
+      } else if (width < 480) {
+        newZoomLevel = 0.8;  // Small phones - increased from 0.6
+      } else if (width < 640) {
+        newZoomLevel = 0.85;  // Large phones - increased from 0.7
+      } else if (width < 768) {
+        newZoomLevel = 0.9;  // Small tablets
+      } else if (width < 1024) {
+        newZoomLevel = 0.95;  // Large tablets
       }
+      
+      setZoomLevel(newZoomLevel);
+      setScreenSizeClass(getScreenSizeClass()); // Update screen size class as well
     }
     
     window.addEventListener('resize', handleResize)
-    handleResize() // Call initially to set the correct zoom level
-    return () => window.removeEventListener('resize', handleResize)
+    
+    // Call once on mount to set initial values
+    handleResize()
+    
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
   }, [])
 
   // Set up event handlers when calendar is mounted
@@ -172,19 +305,66 @@ const CalendarView: React.FC = () => {
     }
   }, [events])
 
+  // Add a new useEffect to handle calendar navigation and showing event on mount
+  useEffect(() => {
+    // Check if we need to focus on a specific event (from ChatWidget)
+    const focusEventId = sessionStorage.getItem('focusEventId')
+    const calendarDate = sessionStorage.getItem('calendarDate')
+    const showEventDialog = sessionStorage.getItem('showEventDialog')
+    
+    if (focusEventId && calendarRef.current) {
+      // Find the event in our store
+      const event = events.find(e => e.id === focusEventId)
+      
+      // Set the date from sessionStorage or from the event
+      if (calendarDate) {
+        const newDate = new Date(calendarDate)
+        if (isValid(newDate)) {
+          // Set the current date to the event's date
+          setCurrentViewDate(newDate)
+          
+          // Navigate to the event's date
+          calendarRef.current.getInstance().setDate(newDate)
+          
+          // Make sure we're in day view (easier to see the specific event)
+          if (window.innerWidth < 640) {
+            // This is a programmatic change, not user-initiated
+            setUserSelectedView(false);
+            changeView('day')
+          }
+        }
+      }
+      
+      // If event exists, select it to view details
+      if (event && showEventDialog === 'true') {
+        // Short delay to ensure the calendar is fully rendered
+        setTimeout(() => {
+          setSelectedEvent(event)
+          setIsViewDialogOpen(true)
+          
+          // Clear the sessionStorage values
+          sessionStorage.removeItem('focusEventId')
+          sessionStorage.removeItem('calendarDate')
+          sessionStorage.removeItem('showEventDialog')
+        }, 300)
+      }
+    }
+  }, [events, calendarRef, changeView])
+
+  // Calendar configuration options
   const calendarOptions: Options = {
-    defaultView: 'week',
+    defaultView: window.innerWidth < 640 ? 'day' as ViewType : 'week' as ViewType,
     usageStatistics: false,
     useDetailPopup: false,
     useFormPopup: false,
     isReadOnly: false,
     week: {
       startDayOfWeek: 0,
-      dayNames: isMobile ? ['', '', '', '', '', '', ''] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      dayNames: isMobile ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       workweek: false,
       showNowIndicator: true,
-      hourStart: 0,
-      hourEnd: 24,
+      hourStart: 0, // Show full 24 hours
+      hourEnd: 24, // Show full 24 hours
       taskView: false,
       eventView: ['time'],
       collapseDuplicateEvents: true
@@ -225,13 +405,6 @@ const CalendarView: React.FC = () => {
       return formattedEvent
     })
     return formattedEvents
-  }
-
-  const changeView = (viewType: ViewType) => {
-    if (calendarRef.current) {
-      calendarRef.current.getInstance().changeView(viewType)
-      setCurrentView(viewType)
-    }
   }
 
   const handleEventClick = (event: MouseEvent) => {
@@ -425,14 +598,23 @@ const CalendarView: React.FC = () => {
   // Navigate to today
   const navigateToday = () => {
     if (calendarRef.current) {
+      // When navigating to today, reset the userSelectedView to allow automatic view switching
+      setUserSelectedView(false);
       const instance = calendarRef.current.getInstance()
       instance.today()
+      
+      // Auto-select day view on mobile, week view on desktop
+      if (window.innerWidth < 640 && currentView !== 'day') {
+        changeView('day');
+      } else if (window.innerWidth >= 640 && currentView !== 'week') {
+        changeView('week');
+      }
     }
   }
 
   // Handle zoom in/out for calendar on mobile
   const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.1, 1.5))
+    setZoomLevel(prev => Math.min(prev + 0.1, 2.0))  // Increased from 1.8 to 2.0 max
   }
 
   const handleZoomOut = () => {
@@ -484,32 +666,176 @@ const CalendarView: React.FC = () => {
     }
   ]
 
+  // Component-specific styles for better mobile experience
+  const mobileCalendarStyles = `
+    /* Reduce the height of time slots in day view */
+    .toastui-calendar-timegrid-time-column {
+      line-height: 0.8 !important;
+    }
+    
+    /* Make grid cells shorter */
+    .toastui-calendar-timegrid-gridline-half {
+      height: ${screenSizeClass === 'xs' ? '24px' : screenSizeClass === 'sm' ? '26px' : '30px'} !important;
+    }
+    
+    /* Adjust time slots and grid container to be more compact */
+    .toastui-calendar-timegrid-container {
+      height: auto !important;
+    }
+    
+    /* Fix hour segment display */
+    .toastui-calendar-timegrid-hour-segments {
+      height: ${screenSizeClass === 'xs' ? '48px' : screenSizeClass === 'sm' ? '52px' : '60px'} !important;
+    }
+    
+    /* Adjust grid cells behavior */
+    .toastui-calendar-timegrid-grid-cell {
+      height: ${screenSizeClass === 'xs' ? '48px' : screenSizeClass === 'sm' ? '52px' : '60px'} !important;
+    }
+    
+    /* Fix the current time indicator positioning */
+    .toastui-calendar-timegrid-now-indicator {
+      z-index: 1 !important;
+    }
+    
+    /* Ensure consistent row heights and spacing */
+    .toastui-calendar-day-view .toastui-calendar-column {
+      min-height: ${screenSizeClass === 'xs' ? '720px' : screenSizeClass === 'sm' ? '780px' : '900px'} !important;
+    }
+    
+    /* Ensure grid stretches to fill column */
+    .toastui-calendar-day-view .toastui-calendar-column .toastui-calendar-gridlines {
+      min-height: ${screenSizeClass === 'xs' ? '720px' : screenSizeClass === 'sm' ? '780px' : '900px'} !important;
+    }
+    
+    /* Make sure events scale properly with smaller grid */
+    .toastui-calendar-time-event {
+      min-height: ${screenSizeClass === 'xs' ? '20px' : '24px'} !important;
+    }
+    
+    /* Adjust all-day area height */
+    .toastui-calendar-panel-allday {
+      height: auto !important;
+      max-height: 40px !important;
+    }
+    
+    /* Adjust time labels to fit in smaller grid */
+    .toastui-calendar-timegrid-time-column .toastui-calendar-timegrid-time-label {
+      height: ${screenSizeClass === 'xs' ? '48px' : screenSizeClass === 'sm' ? '52px' : '60px'} !important;
+      line-height: ${screenSizeClass === 'xs' ? '48px' : screenSizeClass === 'sm' ? '52px' : '60px'} !important;
+    }
+    
+    /* Direct fix for the 72px left on columns - set to 35px in mobile view */
+    .toastui-calendar-columns {
+      left: ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'} !important;
+      width: calc(100% - ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'}) !important;
+      margin-left: 0 !important;
+    }
+    
+    /* Reset all previous margin/transform adjustments */
+    .toastui-calendar-wrapper,
+    .toastui-calendar-day-view,
+    .toastui-calendar-layout.toastui-calendar-day-view-layout,
+    .toastui-calendar-day-view .toastui-calendar-timegrid,
+    .toastui-calendar-day-view .toastui-calendar-day-names,
+    .toastui-calendar-day-view .toastui-calendar-panel-resizer,
+    .toastui-calendar-day-view .toastui-calendar-time-event-container {
+      transform: none !important;
+      margin-left: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    
+    /* Adjust time column width based on screen size */
+    .toastui-calendar-timegrid-time-column {
+      width: ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'} !important;
+      font-size: ${screenSizeClass === 'xs' ? '10px' : screenSizeClass === 'sm' ? '11px' : '12px'} !important;
+      padding-right: 0 !important;
+      text-align: center !important;
+      min-width: ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'} !important;
+      border-right: none !important;
+    }
+    
+    /* Position event containers correctly */
+    .toastui-calendar-day-view .toastui-calendar-time-event-container {
+      margin-left: ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'} !important;
+      left: 0 !important;
+    }
+
+    /* Remove any borders/spacing for seamless display */
+    .toastui-calendar-day-view .toastui-calendar-timegrid {
+      border: none !important;
+    }
+    
+    .toastui-calendar-day-view .toastui-calendar-timegrid-left {
+      margin-right: 0 !important;
+      padding-right: 0 !important;
+      border-right: none !important;
+    }
+    
+    /* Ensure grid content aligns with time column */
+    .toastui-calendar-timegrid-gridline {
+      margin-left: 0 !important;
+      left: ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'} !important;
+    }
+    
+    /* Position time indicators correctly */
+    .toastui-calendar-timegrid-now-indicator-left {
+      left: 0 !important;
+      width: ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'} !important;
+    }
+    
+    .toastui-calendar-timegrid-now-indicator-marker {
+      left: ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'} !important;
+    }
+    
+    .toastui-calendar-timegrid-now-indicator-today {
+      left: ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'} !important;
+      width: calc(100% - ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'}) !important;
+    }
+    
+    /* Format events correctly */
+    .toastui-calendar-time-event {
+      padding: 2px 4px !important;
+    }
+    
+    /* Ensure time grid right section takes up proper width */
+    .toastui-calendar-timegrid-right {
+      width: calc(100% - ${screenSizeClass === 'xs' ? '35px' : screenSizeClass === 'sm' ? '38px' : '42px'}) !important;
+    }
+  `;
+
   return (
     <div className="flex flex-col w-full h-full rounded-lg overflow-hidden">
+      {/* Add custom styles for mobile and tablet views */}
+      {(screenSizeClass === 'xs' || screenSizeClass === 'sm' || screenSizeClass === 'md') && (
+        <style dangerouslySetInnerHTML={{ __html: mobileCalendarStyles }} />
+      )}
+      
       {/* Header */}
-      <div className="flex-none px-4 py-3 border-b">
-        <div className="flex items-center justify-between gap-2">
+      <div className="flex-none px-2 py-1 border-b">
+        <div className="flex flex-wrap items-center justify-between gap-1">
           {/* Date Display */}
-          <div className="text-lg font-medium">
+          <div className="text-base font-medium mr-1">
             {getFormattedViewDate()}
           </div>
           
           {/* Navigation Controls */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Button 
               size="sm" 
               variant="ghost" 
               onClick={navigatePrevious}
-              className="p-1 sm:p-2 h-7 w-7"
+              className="p-0.5 h-6 w-6 min-w-0"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3 w-3" />
             </Button>
             
             <Button 
               size="sm" 
               variant="outline" 
               onClick={navigateToday}
-              className="text-xs px-2 py-1 h-7"
+              className="text-xs px-1 py-0.5 h-6 min-h-0 min-w-0"
             >
               Today
             </Button>
@@ -518,9 +844,9 @@ const CalendarView: React.FC = () => {
               size="sm" 
               variant="ghost" 
               onClick={navigateNext}
-              className="p-1 sm:p-2 h-7 w-7"
+              className="p-0.5 h-6 w-6 min-w-0"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3" />
             </Button>
           </div>
           
@@ -529,93 +855,101 @@ const CalendarView: React.FC = () => {
             <Button 
               size="sm" 
               variant={currentView === 'day' ? 'default' : 'outline'} 
-              onClick={() => changeView('day')}
-              className="rounded-none rounded-l-md"
+              onClick={() => {
+                setUserSelectedView(true);
+                changeView('day');
+              }}
+              className="rounded-none rounded-l-md px-1.5 h-6 min-h-0 text-xs"
             >
               Day
             </Button>
             <Button 
               size="sm" 
               variant={currentView === 'week' ? 'default' : 'outline'} 
-              onClick={() => changeView('week')}
-              className="rounded-none border-l-0 border-r-0"
+              onClick={() => {
+                setUserSelectedView(true);
+                changeView('week');
+              }}
+              className="rounded-none border-l-0 border-r-0 px-1.5 h-6 min-h-0 text-xs"
             >
               Week
             </Button>
             <Button 
               size="sm" 
               variant={currentView === 'month' ? 'default' : 'outline'} 
-              onClick={() => changeView('month')}
-              className="rounded-none rounded-r-md"
+              onClick={() => {
+                setUserSelectedView(true);
+                changeView('month');
+              }}
+              className="rounded-none rounded-r-md px-1.5 h-6 min-h-0 text-xs"
             >
               Month
             </Button>
           </div>
-        </div>
         
-        {/* Secondary Controls */}
-        <div className="flex items-center justify-between mt-2">
-          {/* Mobile Zoom Controls (Left) */}
-          <div className="flex gap-1">
-            {isMobile && (
-              <>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={handleZoomOut}
-                  className="px-2 h-7 min-w-7"
-                >
-                  <span className="text-lg">-</span>
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={handleZoomIn}
-                  className="px-2 h-7 min-w-7"
-                >
-                  <span className="text-lg">+</span>
-                </Button>
-              </>
-            )}
-          </div>
-          
-          {/* Resource/Event Controls (Right) */}
-          <div className="flex gap-1 ml-auto">
+          {/* Mobile Zoom Controls (inline with other controls) */}
+          {isMobile && (
+            <div className="flex gap-0.5">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleZoomOut}
+                className="px-1 h-6 w-6 min-h-0 min-w-0"
+              >
+                <span className="text-base">-</span>
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleZoomIn}
+                className="px-1 h-6 w-6 min-h-0 min-w-0"
+              >
+                <span className="text-base">+</span>
+              </Button>
+            </div>
+          )}
+        
+          {/* Resource/Event Controls */}
+          <div className="flex gap-0.5">
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowCalendarManagement(true)}
-              className="text-xs sm:text-sm h-7"
+              className="text-xs h-6 min-h-0 px-1.5"
             >
-              <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              View Calendars
+              <CalendarIcon className="w-3 h-3 mr-0.5" />
+              Calendars
             </Button>
             <Button
               size="sm"
               onClick={createNewEvent}
-              className="text-xs sm:text-sm h-7"
+              className="text-xs h-6 min-h-0 px-1.5"
             >
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              New Event
+              <Plus className="w-3 h-3 mr-0.5" />
+              New
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Calendar Container */}
-      <div 
-        className="flex-1 min-h-0 w-full p-0 overflow-hidden relative flex flex-col" 
-        style={{ 
-          height: 'calc(100vh - 110px)', // Fixed height calculation for all devices
-          minHeight: '600px', // Ensure minimum height
+      {/* Calendar Container - Adjusted to account for smaller header */}
+      <div
+        className="flex-1 w-full relative overflow-auto"
+        style={{
+          height: isMobile && currentView === 'day' 
+            ? 'calc(100vh - 150px)' // More space for day view on mobile with no title and smaller header
+            : 'calc(100vh - 85px)', // More space with smaller header
+          minHeight: isMobile && currentView === 'day' ? '700px' : '600px',
         }}
       >
+        {/* Use a container div that can be scrolled when the calendar is scaled */}
         <div 
-          className="flex-1 w-full h-full"
+          className={`w-full h-full inline-block ${isMobile ? 'pt-2' : ''}`}
           style={{ 
             transform: `scale(${zoomLevel})`, 
             transformOrigin: 'top left',
-            width: isMobile ? `${130 / zoomLevel}%` : '100%',  // Increased width compensation for mobile scaling
+            width: `${100 / zoomLevel}%`,  // This counters the scale effect to maintain full width
+            height: isMobile && currentView === 'day' ? `${Math.max(140, 120 + (zoomLevel * 30)) / zoomLevel}%` : '100%', // Dynamic height based on zoom
           }}
         >
           <Calendar

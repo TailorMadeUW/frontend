@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import PageHeader from '../components/PageHeader'
+import PageLayout from '../components/PageLayout'
 import useAlertStore, { Alert, AlertType } from '../stores/alertStore'
 import { cn } from '../lib/utils'
 import { CheckCircle2, XCircle, AlertCircle, Info, X, Bell, Trash2, Check, Filter } from 'lucide-react'
@@ -33,11 +33,13 @@ type FilterType = 'all' | AlertType
 const Alerts: React.FC = () => {
   const { alerts, markAsRead, markAllAsRead, removeAlert, clearAllAlerts } = useAlertStore()
   const [currentFilter, setCurrentFilter] = useState<FilterType>('all')
+  const [showReadAlerts, setShowReadAlerts] = useState(true)
   
-  // Apply filters
-  const filteredAlerts = alerts.filter(alert => 
-    currentFilter === 'all' || alert.type === currentFilter
-  )
+  // Get filtered alerts
+  const filteredAlerts = alerts.filter(alert => {
+    if (!showReadAlerts && alert.read) return false
+    return currentFilter === 'all' || alert.type === currentFilter
+  })
   
   // Group alerts by date
   const today = new Date().toDateString()
@@ -79,9 +81,8 @@ const Alerts: React.FC = () => {
   ]
 
   return (
-    <div className="flex flex-col flex-1 h-full overflow-hidden bg-gray-50">
-      <PageHeader title="Alerts & Notifications" />
-      <div className="flex-1 min-h-0 p-6 flex flex-col">
+    <PageLayout title="Alerts & Notifications">
+      <div className="flex-1 min-h-0 p-4 sm:p-6">
         <div className="bg-white rounded-lg shadow-sm border flex flex-col flex-1 overflow-hidden">
           {/* Header with filters and actions */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 p-4 border-b">
@@ -213,7 +214,7 @@ const Alerts: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }
 
