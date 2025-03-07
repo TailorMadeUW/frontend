@@ -157,7 +157,8 @@ const ChatWidget: React.FC = () => {
       calendarId: calendars.length > 0 ? calendars[0].id : 'cal1', // Use first available calendar
       description: eventData.notes,
       allDay: false,
-      state: 'busy' as const
+      state: 'busy' as const,
+      notes: '',
     }
     
     // Add event to the calendar store
