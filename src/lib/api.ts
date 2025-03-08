@@ -170,9 +170,12 @@ export const calendarApi = {
         throw new Error(`API error: ${response.status}`);
       }
 
+      const data = await response.json()
+      console.log("Full calendar:", data)
+
       return {
         success: true,
-        data: await response.json(),
+        data: data,
         error: null
       };
     } catch (error) {
@@ -449,8 +452,97 @@ export const projectApi = {
   }
 };
 
+export const actionsApi = {
+  // Get all actions
+  getAll: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/action`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Actions fetch failed:', error);
+
+      // In development, provide mock data
+      if (!import.meta.env.PROD) {
+        console.log('Using mock data due to API error');
+        return {
+          success: true,
+          data: [
+            {
+              id: 1,
+              name: 'Email client about appointment',
+              priority: 'Medium',
+              type: 'SendConfirmationEmail',
+              state: 'Todo',
+              confirmed: false
+            },
+            {
+              id: 2,
+              name: 'Order blue fabric',
+              priority: 'High',
+              type: 'OrderInventory',
+              state: 'InProgress',
+              confirmed: true
+            }
+          ],
+          error: null
+        };
+      }
+
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+
+  // Run an action
+  runAction: async (id: string, action: any) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/action/run/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(action),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        data: await response.json(),
+        error: null
+      };
+    } catch (error) {
+      console.error('Run action failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+};
+
 export default {
   note: noteApi,
   calendar: calendarApi,
   projectApi: projectApi,
+  actionsApi: actionsApi,
 }; 
