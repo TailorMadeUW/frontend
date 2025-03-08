@@ -1,11 +1,24 @@
 [[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
-
-[[redirects]]
 from = "/api/*"
 to = "https://tailormadeserver-dbhmbqg0b9eda3dd.westus2-01.azurewebsites.net/:splat"
 status = 200
 force = true
 headers = {Access-Control-Allow-Origin = "*"}
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+[build.processing]
+  skip_processing = false
+[build.processing.css]
+  bundle = true
+  minify = true
+[build.processing.js]
+  bundle = true
+  minify = true
+[build.processing.html]
+  pretty_urls = true
+[build.processing.images]
+  compress = true
