@@ -6,7 +6,7 @@
 
 // API base URL - use proxy in development
 const API_BASE_URL = import.meta.env.PROD
-  ? '/api'
+  ? 'https://tailormadeserver-dbhmbqg0b9eda3dd.westus2-01.azurewebsites.net'
   : '/api';
 
 /**
@@ -534,6 +534,30 @@ export const actionsApi = {
       return {
         success: false,
         data: null,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  },
+  // Delete an action
+  delete: async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/action/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return {
+        success: true,
+        error: null
+      };
+    } catch (error) {
+      console.error('Delete action failed:', error);
+      return {
+        success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }

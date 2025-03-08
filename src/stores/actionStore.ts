@@ -1,6 +1,5 @@
 import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
-import { Action, ActionState } from '../types'
+import { Action } from '../types'
 import { actionsApi } from '../lib/api'
 
 interface ActionStore {
@@ -11,14 +10,11 @@ interface ActionStore {
 
   // Actions
   fetchActions: () => Promise<void>
-  runAction: (action: Action) => Promise<Action | null>
-  updateActionState: (actionId: number, newState: ActionState) => void
-  filterActionsByState: (state: ActionState) => Action[]
-  filterActionsByConfirmed: (confirmed: boolean) => Action[]
+  runAction: (id: string) => Promise<Action | null>
+  deleteAction: (actionId: string) => Promise<boolean>
 }
 
 export const useActionStore = create<ActionStore>()(
-  devtools(
     (set, get) => ({
       // Initial state
       actions: [],
@@ -49,10 +45,14 @@ export const useActionStore = create<ActionStore>()(
       },
 
       // Run an action using the API
-      runAction: async (action: Action) => {
+      runAction: async (id: string) => {
         set({ isLoading: true, error: null })
         
         try {
+            
+          const action: Action = get().actions.find(a => a.id === id);
+          if (!action) return
+          
           const response = await actionsApi.runAction(action.id, action)
           
           if (response.success && response.data) {
@@ -80,29 +80,38 @@ export const useActionStore = create<ActionStore>()(
         }
       },
 
-      // Update action state (optimistic update)
-      updateActionState: (actionId: number, newState: ActionState) => {
-        set((state) => ({
-          actions: state.actions.map(action => 
-            action.id === actionId 
-              ? { ...action, state: newState } 
-              : action
-          )
-        }))
+      // Delete an action and refresh the actions list
+      deleteAction: async (actionId: string) => {
+        set({ isLoading: true, error: null })
+        
+        try {
+          const response = await actionsApi.delete(actionId)
+          
+          if (response.success) {
+            // Remove the action from the store and refresh
+            set((state) => ({
+              actions: state.actions.filter(a => a.id !== actionId),
+              isLoading: false
+            }))
+            // Refresh the actions list to ensure consistency with the server
+            await get().fetchActions()
+            return true
+          } else {
+            set({ 
+              error: response.error || 'Failed to delete action', 
+              isLoading: false 
+            })
+            return false
+          }
+        } catch (error) {
+          set({ 
+            error: error instanceof Error ? error.message : 'Unknown error occurred', 
+            isLoading: false 
+          })
+          return false
+        }
       },
-
-      // Filter actions by state
-      filterActionsByState: (state: ActionState) => {
-        return get().actions.filter(action => action.state === state)
-      },
-
-      // Filter actions by confirmed status
-      filterActionsByConfirmed: (confirmed: boolean) => {
-        return get().actions.filter(action => action.confirmed === confirmed)
-      }
-    }),
-    { name: 'action-store' }
-  )
+    })
 )
 
 export default useActionStore

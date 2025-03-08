@@ -51,14 +51,22 @@ export enum ActionState {
 export enum ActionPriority {
   Low = 'Low',
   Medium = 'Medium',
-  HIgh = 'High'
+  High = 'High'
 }
+
+export const ActionPriorityShim = {
+  0: 'Low',
+  1: 'Medium',
+  2: 'High'
+};
 
 export interface Action {
   id: string
   name: string
+  description: string
   priority: ActionPriority
   type: ActionType,
+  date: Date,
   state: ActionState
   confirmed: boolean
 }
