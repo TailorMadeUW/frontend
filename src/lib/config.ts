@@ -11,7 +11,7 @@ interface Config {
 // Default configuration
 const defaultConfig: Config = {
   apiBaseUrl: import.meta.env.PROD 
-    ? 'https://tailormadeserver-dbhmbqg0b9eda3dd.westus2-01.azurewebsites.net'
+    ? '/api'
     : '/api', // In development, use the proxy defined in vite.config.ts
   apiTimeout: 30000, // 30 seconds
   enableMocks: import.meta.env.PROD ? false : true, // Enable mocks in development by default
