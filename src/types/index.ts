@@ -35,12 +35,54 @@ export interface AvailabilitySlot {
   isAvailable: boolean
 }
 
+export enum ActionType {
+  SendConfirmationEmail = 'SendConfirmationEmail',
+  SendEmailToContractor = 'SendEmailToContractor',
+  OrderInventory = 'OrderInventory',
+  SendAdEmail = 'SendAdEmail'
+}
+
+export enum ActionState {
+  Todo = 'Todo',
+  InProgress = 'InProgress',
+  Done = 'Done'
+}
+
+export enum ActionPriority {
+  Low = 'Low',
+  Medium = 'Medium',
+  High = 'High'
+}
+
+export const ActionPriorityShim = {
+  0: 'Low',
+  1: 'Medium',
+  2: 'High'
+};
+
+export interface Action {
+  id: string
+  name: string
+  description: string
+  priority: ActionPriority
+  type: ActionType,
+  date: Date,
+  state: ActionState
+  confirmed: boolean
+}
+
 export interface Project {
   id: string
   name: string
   description: string
   clientName: string
+  clientEmail: string,
   clientCost: number
+  inventoryNeeded: number
+  appointmentsNeeded: number
+  measurements: string
+  notes: string
   dueDate: Date
+  actions: Action[]
   appointments: Event[]
 }

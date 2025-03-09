@@ -1,24 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import PageLayout from '../components/PageLayout';
-import { Check, X, ChevronDown, ChevronUp, Calendar as CalendarIcon, Maximize2 } from 'lucide-react';
+import { Check, X, ChevronDown, ChevronUp, Maximize2 } from 'lucide-react';
 import { format } from 'date-fns';
 import useProjectServerStore from '../stores/projectServerStore';
-import { Project } from '../types';
+import useActionStore from '../stores/actionStore';
+import { Action, ActionPriority, ActionPriorityShim, ActionState } from '../types';
 
 // Define Action type for better type safety
-interface Action {
-  id: number;
-  type: 'reschedule' | 'send' | 'call' | 'email';
-  person?: string;
-  item?: string;
-  date: Date;
-  initials: string;
-  completed?: boolean;
-}
 
 const Home: React.FC = () => {
   // Get projects from the store
   const { projects, isLoading, fetchProjects } = useProjectServerStore();
+  const { actions, runAction, deleteAction } = useActionStore()
   
   // Modified state for today's projects with progress added
   const [todaysProjects, setTodaysProjects] = useState<Array<{ id: string; name: string; progress: number; clientName: string }>>([]);
@@ -49,45 +42,6 @@ const Home: React.FC = () => {
     }
   }, [projects]);
 
-  // Move mock data into state for interactivity
-  const [actions, setActions] = useState<Action[]>([
-    { 
-      id: 1, 
-      type: 'reschedule', 
-      person: 'Ellie', 
-      date: new Date(2025, 3, 25, 14, 0), // March 25, 2025, 2:00 PM
-      initials: 'EK'
-    },
-    { 
-      id: 2, 
-      type: 'send', 
-      item: 'AD', 
-      date: new Date(2025, 3, 17, 14, 0), // March 17, 2025, 2:00 PM
-      initials: 'RP'
-    },
-    { 
-      id: 3, 
-      type: 'reschedule', 
-      person: 'Michael', 
-      date: new Date(2025, 3, 20, 10, 0), // March 20, 2025, 10:00 AM
-      initials: 'MS'
-    },
-    { 
-      id: 4, 
-      type: 'send', 
-      item: 'Invoice', 
-      date: new Date(2025, 3, 22, 13, 30), // March 22, 2025, 1:30 PM
-      initials: 'JD'
-    },
-    { 
-      id: 5, 
-      type: 'reschedule', 
-      person: 'Sarah', 
-      date: new Date(2025, 3, 18, 15, 0), // March 18, 2025, 3:00 PM
-      initials: 'SW'
-    }
-  ]);
-
   // State for expanded sections
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     projects: false,
@@ -106,24 +60,18 @@ const Home: React.FC = () => {
   };
 
   // Handle approve/complete button
-  const handleApproveAction = (id: number) => {
-    setActions(prevActions => 
-      prevActions.map(action => 
-        action.id === id 
-          ? { ...action, completed: true } 
-          : action
-      )
-    );
+  const handleApproveAction = async (id: string) => {
+    await runAction(id)
     
     // Remove the completed action after a brief delay to show the completed state
     setTimeout(() => {
-      setActions(prevActions => prevActions.filter(action => action.id !== id));
+      deleteAction(id);
     }, 500);
   };
 
   // Handle dismiss/cancel button
-  const handleDismissAction = (id: number) => {
-    setActions(prevActions => prevActions.filter(action => action.id !== id));
+  const handleDismissAction = (id: string) => {
+    deleteAction(id);
   };
 
   // Toggle section expanded state
@@ -281,35 +229,33 @@ const Home: React.FC = () => {
                 transition: 'max-height 0.3s ease-in-out'
               }}
             >
-              {getVisibleActions().map((action, index) => (
+              {getVisibleActions().slice().sort((a: Action, b: Action) => b.priority - a.priority).map((action, index) => (
                 <div 
                   key={action.id} 
                   className={`flex items-center justify-between pb-4 ${
-                    action.completed ? 'opacity-50' : ''
+                    action.state == ActionState.Done ? 'opacity-50' : ''
                   }`}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-full bg-slate-500 flex items-center justify-center text-white">
-                      {action.initials}
+                      {action.name.substring(0, 1)}
                     </div>
                     <div>
                       {/* For the third item when we have more than 3, just show the person's name */}
                       {index === 2 && actions.length > 3 && !expandedSections.actions ? (
                         <>
-                          <div className="font-medium">{action.person}</div>
+                          <div className="font-medium">{action.name}</div>
                           <div className="text-sm text-gray-500">
-                            {format(action.date, 'd MMMM, yyyy')} | {format(action.date, 'HH:mm')}
+                            {ActionPriority[ActionPriorityShim[action.priority]]}
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="font-medium">
-                            {action.type === 'reschedule' 
-                              ? `Reschedule - ${action.person}` 
-                              : `Send ${action.item}`}
+                            {action.description}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {format(action.date, 'd MMMM, yyyy')} | {format(action.date, 'HH:mm')}
+                            {ActionPriority[ActionPriorityShim[action.priority]]}
                           </div>
                         </>
                       )}
