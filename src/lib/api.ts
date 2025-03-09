@@ -6,8 +6,7 @@
 
 // API base URL - use proxy in development
 const API_BASE_URL = import.meta.env.PROD
-  ? 'https://tailormadeserver-dbhmbqg0b9eda3dd.westus2-01.azurewebsites.net'
-  : '/api';
+  ? '/api' : '/api';
 
 /**
  * Note API endpoints
