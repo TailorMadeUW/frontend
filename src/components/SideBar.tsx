@@ -71,7 +71,7 @@ const SideBar: React.FC = () => {
     
     return (
     <>
-      <div className={`px-4 ${isMobile ? 'mb-4' : 'mb-6'} flex items-center gap-2`}>
+      <div className={`px-4 ${isMobile ? 'mb-4' : 'mb-4'} flex items-center gap-2`}>
         <Link to="/app/home" className="flex items-center gap-2">
           <img src={TailorMadeLogo} alt="TailorMade Logo" className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} />
           <span className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-blue-600`}>TailorMade</span>
