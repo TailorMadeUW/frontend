@@ -19,7 +19,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title }) => {
   ]
 
   return (
-    <header className="flex-none flex justify-between items-center p-0 lg:p-3 sm:p-4 md:p-6">
+    <header className="flex-none flex justify-between items-center p-0 lg:p-6 sm:p-2 md:p-2">
       <h1 className="hidden lg:block text-xl sm:text-2xl font-semibold">{title}</h1>
       
       {/* Header items - visible only on desktop */}
