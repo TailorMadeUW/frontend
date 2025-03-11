@@ -40,20 +40,117 @@ export const noteApi = {
       // In development, provide mock data
       if (!import.meta.env.PROD) {
         console.log('Using mock data due to API error');
-        return {
-          success: true,
-          data: {
-            date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            clientName: "John Smith",
-            tailor: "Maria Rodriguez",
-            duration: 60,
-            appointmentsNeeded: 2,
-            inventoryNeeded: "Blue fabric (2 yards), Buttons (12)",
-            notes: "Client requested slim fit suit with modern lapels. Previous measurements need updating due to recent weight change.",
-            measurements: "Chest: 42\", Waist: 34\", Inseam: 32\""
-          },
-          error: null
-        };
+        
+        // Randomize what type of data we return (appointment or project)
+        const responseType = Math.random() > 0.5 ? 'appointment' : 'project';
+        
+        if (responseType === 'appointment') {
+          return {
+            success: true,
+            data: {
+              date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+              clientName: "John Smith",
+              tailor: "Maria Rodriguez",
+              duration: 60,
+              appointmentsNeeded: 2,
+              inventoryNeeded: "Blue fabric (2 yards), Buttons (12)",
+              notes: "Client requested slim fit suit with modern lapels. Previous measurements need updating due to recent weight change.",
+              measurements: "Chest: 42\", Waist: 34\", Inseam: 32\""
+            },
+            error: null
+          };
+        } else {
+          // Mock project data
+          return {
+            success: true,
+            data: {
+              type: 'project',
+              project: {
+                id: "acc56652-94d0-4deb-bf90-a2ec0d45a55f",
+                name: "Emily Porter Wedding Dress Alteration Project",
+                description: "This project covers alterations for Emily Porter's upcoming wedding dress. The work includes measurement confirmation, reinforcing the bodice structure, adjustment for detachable lace sleeves, review of lace swatches and fabric choices, demonstration of a sample bustle mechanism for the train fastening, and final tweaks such as hem confirmations. The client will decide between built-in corset support or alternative cup options during the process.",
+                clientName: "Emily Porter",
+                clientEmail: "emily.porter@example.com",
+                clientCost: 800,
+                appointmentsNeeded: 3,
+                inventoryNeeded: "Ivory lace fabric, lace applique material, lace swatches, sample bustle mechanism kit",
+                notes: null,
+                measurements: "Bust: 35 inch, Waist: 27 inch, Hips: 38 inch, Hollow-to-hear: 59 inch",
+                dueDate: "2026-05-23T00:00:00",
+                appointments: [
+                  {
+                    id: "9be63359-48cd-4cf1-bd3c-ec4cbb35f644",
+                    projectId: null,
+                    date: "2025-03-10T08:00:00",
+                    clientName: "Emily Porter",
+                    tailor: "Darren",
+                    duration: 60,
+                    description: "Initial fitting to confirm measurements and discuss overall design elements, including fabric choices for lace and tulle components.",
+                    notes: "Measurement confirmation and initial consultation to discuss design details, detachable sleeves, and fabric preferences.",
+                    location: "Fitting Room 1"
+                  },
+                  {
+                    id: "1481a44a-3894-45c1-9faf-dbd64f10afa0",
+                    projectId: null,
+                    date: "2025-03-30T10:00:00",
+                    clientName: "Emily Porter",
+                    tailor: "Sarah",
+                    duration: 60,
+                    description: "Second fitting to finalize the bodice design, evaluate fabric samples, and demonstrate bustle mechanism options.",
+                    notes: "Review and finalize bodice reinforcement details; present lace swatches and sample bustle mechanism options.",
+                    location: "Fitting Room 2"
+                  },
+                  {
+                    id: "a580e518-9d7a-4917-b8b3-d6b05ca1e372",
+                    projectId: null,
+                    date: "2025-04-13T09:00:00",
+                    clientName: "Emily Porter",
+                    tailor: "Darren",
+                    duration: 60,
+                    description: "Third fitting for final adjustments, confirming the hem length and overall fit, and locking in design choices.",
+                    notes: "Final tweaks including hem length confirmation and addressing any adjustments from client's diet changes.",
+                    location: "Fitting Room 3"
+                  }
+                ],
+                actions: [
+                  {
+                    id: "c1497bc0-0cb9-4408-966c-7f2f22a4673e",
+                    name: "Order Ivory Lace Fabric",
+                    description: "Order the required ivory lace fabric to replace the standard stock white option and to be used in the lace appliqués on the dress.",
+                    type: 2,
+                    priority: 2,
+                    state: 0
+                  },
+                  {
+                    id: "89d9d043-ea65-4f36-a563-ca762177460c",
+                    name: "Order Lace Applique Material",
+                    description: "Procure the appropriate lace applique material needed for the low V-back detailing and trim around the waistline.",
+                    type: 2,
+                    priority: 2,
+                    state: 0
+                  },
+                  {
+                    id: "730daa7d-5413-4606-80c4-d9ccd38f0c5d",
+                    name: "Order Lace Swatches",
+                    description: "Obtain samples of lace swatches to finalize the detachable cup sleeve fabric choice during the next fitting.",
+                    type: 2,
+                    priority: 2,
+                    state: 0
+                  },
+                  {
+                    id: "869e2042-2f7a-49b9-adfe-2f2d929bc000",
+                    name: "Order Sample Bustle Mechanism Kit",
+                    description: "Purchase a sample kit for a simple bustle mechanism so that the maid of honor can easily fasten the train, as requested.",
+                    type: 2,
+                    priority: 2,
+                    state: 0
+                  }
+                ]
+              }
+            },
+            error: null
+          };
+        }
       }
       
       return {

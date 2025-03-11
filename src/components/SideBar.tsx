@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Calendar, Clock, Settings, User, Terminal, Menu, X, CreditCard, MessageSquare, Bell, Users, Percent, Home as HomeIcon } from 'lucide-react'
+import { Calendar, Clock, Settings, User, Terminal, Menu, X, CreditCard, MessageSquare, Bell, Users, Percent, Home as HomeIcon, FolderKanban } from 'lucide-react'
 import { useLocation, Link } from 'react-router-dom'
 import useCalendarStore from '../stores/calendarServerStore'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
@@ -24,6 +24,7 @@ const SideBar: React.FC = () => {
     { icon: Users, label: 'Clients', path: '/app/clients' },
     { icon: Percent, label: 'Promotions', path: '/app/promotions' },
     { icon: CreditCard, label: 'Payment', path: '/app/payment' },
+    { icon: FolderKanban, label: 'Projects', path: '/app/projects' },
   ]
 
   // Items that will be in the header on desktop and in mobile menu

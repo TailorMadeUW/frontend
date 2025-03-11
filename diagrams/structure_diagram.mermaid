@@ -1,0 +1,129 @@
+flowchart TD
+    %% Entry Layer
+    A["index.html"]:::entry
+    B["src/main.tsx"]:::entry
+    A -->|"bootstraps"| B
+
+    %% Application Shell
+    C["src/App.tsx"]:::app
+    B -->|"loads"| C
+
+    %% Pages Layer
+    subgraph "Pages Layer"
+        P1["Home.tsx"]:::page
+        P2["Calendar.tsx"]:::page
+        P3["Chats.tsx"]:::page
+        P4["Clients.tsx"]:::page
+        P5["Contacts.tsx"]:::page
+        P6["Appointment.tsx"]:::page
+        P7["Payment.tsx"]:::page
+        P8["Profile.tsx"]:::page
+        P9["Promotions.tsx"]:::page
+        P10["Schedule.tsx"]:::page
+        P11["Settings.tsx"]:::page
+    end
+    C -->|"renders"| P1
+    C -->|"renders"| P2
+    C -->|"renders"| P3
+    C -->|"renders"| P4
+    C -->|"renders"| P5
+    C -->|"renders"| P6
+    C -->|"renders"| P7
+    C -->|"renders"| P8
+    C -->|"renders"| P9
+    C -->|"renders"| P10
+    C -->|"renders"| P11
+
+    %% UI Components Layer
+    subgraph "UI Components"
+        UI1["UI Library (src/components/ui)"]:::ui
+        UI2["AlertPopup (src/components/AlertPopup.tsx)"]:::ui
+        UI3["ChatWidget (src/components/ChatWidget.tsx)"]:::ui
+        UI4["LoadingScreen (src/components/LoadingScreen.tsx)"]:::ui
+        UI5["PageHeader (src/components/PageHeader.tsx)"]:::ui
+        UI6["PageLayout (src/components/PageLayout.tsx)"]:::ui
+        UI7["SideBar (src/components/SideBar.tsx)"]:::ui
+    end
+    C -->|"incorporates"| UI1
+    C -->|"incorporates"| UI2
+    C -->|"incorporates"| UI3
+    C -->|"incorporates"| UI4
+    C -->|"incorporates"| UI5
+    C -->|"incorporates"| UI6
+    C -->|"incorporates"| UI7
+
+    %% Calendar Module Layer
+    subgraph "Calendar Module"
+        CAL1["Calendar Module (src/components/Calendar)"]:::calendar
+    end
+    C -->|"integrates"| CAL1
+
+    %% State Management Layer
+    subgraph "State Stores"
+        S1["Stores (src/stores)"]:::store
+    end
+    C -->|"manages state via"| S1
+    P1 -->|"updates state"| S1
+    P2 -->|"updates state"| S1
+    UI2 -->|"triggers state"| S1
+
+    %% Utility & Hooks Layer
+    subgraph "Utility & Hooks"
+        U1["API & Utilities (src/lib)"]:::utility
+        U2["Custom Hooks (src/hooks)"]:::utility
+    end
+    C -->|"leverages"| U1
+    C -->|"leverages"| U2
+    UI1 -->|"calls"| U1
+    P3 -->|"fetches data via"| U1
+    UI1 -->|"uses"| U2
+
+    %% Configuration & Deployment
+    subgraph "Configuration & Deployment"
+        CN1["Build Config (vite.config.ts, tsconfig files)"]:::config
+        CN2["Tailwind/PostCSS (tailwind.config.js, postcss.config.js)"]:::config
+        CN3["Deployment (netlify.toml)"]:::config
+    end
+    C -->|"configured by"| CN1
+    C -->|"styled with"| CN2
+    C -->|"deployed via"| CN3
+
+    %% Click Events
+    click A "https://github.com/tailormadeuw/frontend/blob/main/index.html"
+    click B "https://github.com/tailormadeuw/frontend/blob/main/src/main.tsx"
+    click C "https://github.com/tailormadeuw/frontend/blob/main/src/App.tsx"
+    click P1 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P2 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P3 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P4 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P5 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P6 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P7 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P8 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P9 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P10 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click P11 "https://github.com/tailormadeuw/frontend/tree/main/src/pages"
+    click UI1 "https://github.com/tailormadeuw/frontend/tree/main/src/components/ui"
+    click UI2 "https://github.com/tailormadeuw/frontend/blob/main/src/components/AlertPopup.tsx"
+    click UI3 "https://github.com/tailormadeuw/frontend/blob/main/src/components/ChatWidget.tsx"
+    click UI4 "https://github.com/tailormadeuw/frontend/blob/main/src/components/LoadingScreen.tsx"
+    click UI5 "https://github.com/tailormadeuw/frontend/blob/main/src/components/PageHeader.tsx"
+    click UI6 "https://github.com/tailormadeuw/frontend/blob/main/src/components/PageLayout.tsx"
+    click UI7 "https://github.com/tailormadeuw/frontend/blob/main/src/components/SideBar.tsx"
+    click CAL1 "https://github.com/tailormadeuw/frontend/tree/main/src/components/Calendar"
+    click S1 "https://github.com/tailormadeuw/frontend/tree/main/src/stores"
+    click U1 "https://github.com/tailormadeuw/frontend/tree/main/src/lib"
+    click U2 "https://github.com/tailormadeuw/frontend/tree/main/src/hooks"
+    click CN1 "https://github.com/tailormadeuw/frontend/blob/main/vite.config.ts"
+    click CN2 "https://github.com/tailormadeuw/frontend/blob/main/tailwind.config.js"
+    click CN3 "https://github.com/tailormadeuw/frontend/blob/main/netlify.toml"
+
+    %% Styles
+    classDef entry fill:#FFEE88,stroke:#333,stroke-width:2px;
+    classDef app fill:#A3D2FF,stroke:#333,stroke-width:2px;
+    classDef page fill:#D5F5E3,stroke:#333,stroke-width:2px;
+    classDef ui fill:#F7A1A1,stroke:#333,stroke-width:2px;
+    classDef calendar fill:#FFD8A8,stroke:#333,stroke-width:2px;
+    classDef store fill:#C5CAE9,stroke:#333,stroke-width:2px;
+    classDef utility fill:#A7E8BD,stroke:#333,stroke-width:2px;
+    classDef config fill:#F6A5C0,stroke:#333,stroke-width:2px;

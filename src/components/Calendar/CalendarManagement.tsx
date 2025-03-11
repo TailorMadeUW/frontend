@@ -1,5 +1,5 @@
-import React from 'react'
-import { Plus, MoreVertical, Eye, EyeOff, Trash2, X } from 'lucide-react'
+import React, { useState } from 'react'
+import { Plus, MoreVertical, Eye, EyeOff, Trash2, X, Edit } from 'lucide-react'
 import { Button } from '../ui/button'
 import useCalendarStore from '../../stores/calendarServerStore'
 import { Calendar } from '../../types'
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { CreateCalendarDialog } from './CreateCalendarDialog'
+import { EditCalendarDialog } from './EditCalendarDialog'
 import { cn } from '../../lib/utils'
 
 interface CalendarManagementProps {
@@ -19,7 +20,9 @@ interface CalendarManagementProps {
 
 export const CalendarManagement: React.FC<CalendarManagementProps> = ({ isOpen, onClose }) => {
   const { calendars, updateCalendar, deleteCalendar } = useCalendarStore()
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [selectedCalendar, setSelectedCalendar] = useState<Calendar | null>(null)
 
   const handleVisibilityToggle = (calendar: Calendar) => {
     updateCalendar(calendar.id, { isAvailable: !calendar.isAvailable })
@@ -29,6 +32,11 @@ export const CalendarManagement: React.FC<CalendarManagementProps> = ({ isOpen, 
     if (confirm('Are you sure you want to delete this calendar?')) {
       deleteCalendar(id)
     }
+  }
+
+  const handleEditCalendar = (calendar: Calendar) => {
+    setSelectedCalendar(calendar)
+    setIsEditDialogOpen(true)
   }
 
   return (
@@ -105,6 +113,12 @@ export const CalendarManagement: React.FC<CalendarManagementProps> = ({ isOpen, 
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       <DropdownMenuItem
+                        onClick={() => handleEditCalendar(calendar)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        <span>Edit</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         onClick={() => handleDeleteCalendar(calendar.id)}
                         className="text-red-600"
                       >
@@ -123,6 +137,14 @@ export const CalendarManagement: React.FC<CalendarManagementProps> = ({ isOpen, 
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
         />
+        
+        {selectedCalendar && (
+          <EditCalendarDialog
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            calendar={selectedCalendar}
+          />
+        )}
       </div>
     </>
   )

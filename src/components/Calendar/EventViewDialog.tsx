@@ -20,7 +20,8 @@ import {
   FileText,
   Tag,
   Edit,
-  Trash2
+  Trash2,
+  ExternalLink
 } from 'lucide-react'
 import { Event } from '../../types'
 
@@ -29,6 +30,7 @@ interface EventViewDialogProps {
   onClose: () => void
   onEdit: () => void
   onDelete: () => void
+  onViewInCalendar?: () => void
   event: Event
 }
 
@@ -37,6 +39,7 @@ const EventViewDialog: React.FC<EventViewDialogProps> = ({
   onClose,
   onEdit,
   onDelete,
+  onViewInCalendar,
   event
 }) => {
   // Ensure start and end dates are valid Date objects
@@ -209,6 +212,21 @@ const EventViewDialog: React.FC<EventViewDialogProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Add a footer with the View in Calendar button */}
+        {onViewInCalendar && (
+          <DialogFooter className="px-6 py-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={onViewInCalendar}
+              className="flex items-center gap-2"
+            >
+              <CalendarIcon className="h-4 w-4" />
+              <span>View in Calendar</span>
+              <ExternalLink className="h-3 w-3 ml-1" />
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   )

@@ -19,6 +19,7 @@ import useCalendarStore from './stores/calendarStore'
 import useCalendarServerStore from './stores/calendarServerStore'
 import useProjectServerStore from './stores/projectServerStore'
 import useActionStore from './stores/actionStore'
+import Projects from './pages/Projects'
 
 const App: React.FC = () => {
   const { isLoading, initializeApp, resourceLoaded, setLoading } = useLoadingStore()
@@ -65,6 +66,7 @@ const App: React.FC = () => {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<Navigate to="/app/home" replace />} />
+              <Route path="/app" element={<Navigate to="/app/home" replace />} />
               <Route path="/app/home" element={<Home />} />
               <Route path="/app/calendar" element={<Calendar />} />
               <Route path="/app/appointment" element={<Appointment />} />
@@ -75,6 +77,8 @@ const App: React.FC = () => {
               <Route path="/app/alerts" element={<Alerts />} />
               <Route path="/app/chats" element={<Chats />} />
               <Route path="/app/profile" element={<Profile />} />
+              <Route path="/app/projects" element={<Projects />} />
+              <Route path="/app/projects/:projectId" element={<Projects />} />
             </Routes>
           </main>
           <Toast />
