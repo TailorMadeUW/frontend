@@ -92,7 +92,7 @@ const Home: React.FC = () => {
   };
   
   // Mock data for staff capacity
-  const staffMembers = Array(7).fill('Dara');
+  const staffMembers = ['Darren', 'Sarah', 'Darren', 'Sarah', 'Darren', 'Sarah', 'Darren'];
   const staffAvailability = [
     [false, false, false, true, false, false, true],  // Row 1
     [false, true, false, true, false, false, true],   // Row 2 
