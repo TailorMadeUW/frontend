@@ -94,9 +94,21 @@ const ChatWidget: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Track message count to only scroll when new messages are added
+  const [messageCount, setMessageCount] = useState(1) // Start with 1 for welcome message
+
   useEffect(() => {
+    // Always scroll to bottom when messages change
     scrollToBottom()
+    setMessageCount(messages.length)
   }, [messages])
+
+  // Also scroll to bottom when the chat is opened
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom()
+    }
+  }, [isOpen])
 
   const handleSendMessage = () => {
     if (inputValue.trim() === '') return
@@ -154,10 +166,10 @@ const ChatWidget: React.FC = () => {
       
       // Add user message showing the uploaded file
       setMessages(prev => [...prev, {
-        id: uuidv4(),
-        type: 'user',
-        content: `Uploaded image: ${file.name}`,
-        timestamp: new Date()
+          id: uuidv4(),
+          type: 'user',
+          content: `Uploaded image: ${file.name}`,
+          timestamp: new Date()
       }]);
       
       if (apiResponse.success && apiResponse.data) {
@@ -220,10 +232,10 @@ const ChatWidget: React.FC = () => {
       
       // Show error message
       setMessages(prev => [...prev, {
-        id: uuidv4(),
-        type: 'system',
+          id: uuidv4(),
+          type: 'system',
         content: 'Sorry, there was an error processing your image. Please try again.',
-        timestamp: new Date()
+          timestamp: new Date()
       }]);
     } finally {
       // Clear the file input
@@ -237,11 +249,15 @@ const ChatWidget: React.FC = () => {
     const eventDate = new Date(eventData.date)
     
     // Calculate end time based on duration (in minutes)    
+    const endTime = new Date(eventDate)
+    endTime.setMinutes(endTime.getMinutes() + eventData.duration)
+    
     const newEvent = {
       ...eventData,
       id: uuidv4(),
       title: `Fitting: ${eventData.clientName}`,
       start: eventDate,
+      end: endTime, // Add end time based on duration
       calendarId: calendars.length > 0 ? calendars[0].id : 'cal1', // Use first available calendar
       description: eventData.notes,
       allDay: false,
@@ -263,9 +279,9 @@ const ChatWidget: React.FC = () => {
       content: {
         type: 'appointment',
         data: {
-          ...eventData,
-          appointmentCreated: true,
-          createdEventId
+        ...eventData,
+        appointmentCreated: true,
+        createdEventId
         },
         content: `Great! The appointment has been added to your calendar for ${format(eventDate, 'EEEE, MMMM d, yyyy')} at ${format(eventDate, 'h:mm a')}`
       }
@@ -310,39 +326,45 @@ const ChatWidget: React.FC = () => {
       // Create the project
       await createProject(projectToSubmit as unknown as Project);
       
-      // Update the message to show that the project was created
-      setMessages(prev => prev.map(msg => {
-        if (!isStringContent(msg.content) && 
-            msg.content.type === 'project' && 
-            msg.content.data.id === project.id) {
-          return {
-            ...msg,
-            content: {
-              ...msg.content,
-              data: {
-                ...msg.content.data,
-                created: true
+      // Update the message to show that the project was created without triggering scroll
+      setMessages(prev => {
+        const newMessages = prev.map(msg => {
+          if (!isStringContent(msg.content) && 
+              msg.content.type === 'project' && 
+              msg.content.data.id === project.id) {
+            return {
+              ...msg,
+              content: {
+                ...msg.content,
+                data: {
+                  ...msg.content.data,
+                  created: true
+                }
               }
-            }
-          };
-        }
-        return msg;
-      }));
+            };
+          }
+          return msg;
+        });
+        
+        return newMessages;
+      });
       
-      // Add confirmation message
-      setMessages(prev => [...prev, {
-        id: uuidv4(),
-        type: 'system',
-        content: `Project "${project.name}" has been created successfully with ${project.appointments.length} appointments and ${project.actions.length} actions.`,
-        timestamp: new Date()
-      }]);
+      // Add confirmation message - this will trigger scroll since it's a new message
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: uuidv4(),
+          type: 'system',
+          content: `Project "${project.name}" has been created successfully with ${project.appointments.length} appointments and ${project.actions.length} actions.`,
+          timestamp: new Date()
+        }]);
+      }, 500);
       
       // Clear the editing project
       setEditingProject(null);
     } catch (error) {
       console.error('Failed to create project:', error);
       
-      // Show error message
+      // Show error message - this will trigger scroll since it's a new message
       setMessages(prev => [...prev, {
         id: uuidv4(),
         type: 'system',
@@ -352,7 +374,23 @@ const ChatWidget: React.FC = () => {
     }
   };
 
-  // Update the project helper functions
+  // Helper function to update a message without triggering scroll
+  const updateMessageWithoutScroll = (messageId: string, updatedData: any) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === messageId && !isStringContent(msg.content)) {
+        return {
+          ...msg,
+          content: {
+            ...msg.content,
+            data: updatedData
+          }
+        };
+      }
+      return msg;
+    }));
+  };
+
+  // Update the updateProjectField function
   const updateProjectField = (project: ExtendedProject, field: keyof ExtendedProject, value: any) => {
     if (!editingProject) return;
     
@@ -363,7 +401,7 @@ const ChatWidget: React.FC = () => {
     
     setEditingProject(updatedProject);
     
-    // Update the message with the edited project
+    // Find the message containing this project and update it without triggering scroll
     setMessages(prev => prev.map(msg => {
       if (!isStringContent(msg.content) && 
           msg.content.type === 'project' && 
@@ -405,7 +443,7 @@ const ChatWidget: React.FC = () => {
     
     setEditingProject(updatedProject);
     
-    // Update the message with the edited project
+    // Find the message containing this project and update it without triggering scroll
     setMessages(prev => prev.map(msg => {
       if (!isStringContent(msg.content) && 
           msg.content.type === 'project' && 
@@ -440,7 +478,7 @@ const ChatWidget: React.FC = () => {
     
     setEditingProject(updatedProject);
     
-    // Update the message with the edited project
+    // Find the message containing this project and update it without triggering scroll
     setMessages(prev => prev.map(msg => {
       if (!isStringContent(msg.content) && 
           msg.content.type === 'project' && 
@@ -475,7 +513,7 @@ const ChatWidget: React.FC = () => {
     
     setEditingProject(updatedProject);
     
-    // Update the message with the edited project
+    // Find the message containing this project and update it without triggering scroll
     setMessages(prev => prev.map(msg => {
       if (!isStringContent(msg.content) && 
           msg.content.type === 'project' && 
@@ -502,7 +540,7 @@ const ChatWidget: React.FC = () => {
     
     setEditingProject(updatedProject);
     
-    // Update the message with the edited project
+    // Find the message containing this project and update it without triggering scroll
     setMessages(prev => prev.map(msg => {
       if (!isStringContent(msg.content) && 
           msg.content.type === 'project' && 
@@ -543,7 +581,7 @@ const ChatWidget: React.FC = () => {
     
     setEditingProject(updatedProject);
     
-    // Update the message with the edited project
+    // Find the message containing this project and update it without triggering scroll
     setMessages(prev => prev.map(msg => {
       if (!isStringContent(msg.content) && 
           msg.content.type === 'project' && 
@@ -578,7 +616,7 @@ const ChatWidget: React.FC = () => {
     
     setEditingProject(updatedProject);
     
-    // Update the message with the edited project
+    // Find the message containing this project and update it without triggering scroll
     setMessages(prev => prev.map(msg => {
       if (!isStringContent(msg.content) && 
           msg.content.type === 'project' && 
@@ -613,7 +651,7 @@ const ChatWidget: React.FC = () => {
     
     setEditingProject(updatedProject);
     
-    // Update the message with the edited project
+    // Find the message containing this project and update it without triggering scroll
     setMessages(prev => prev.map(msg => {
       if (!isStringContent(msg.content) && 
           msg.content.type === 'project' && 
@@ -640,7 +678,7 @@ const ChatWidget: React.FC = () => {
     
     setEditingProject(updatedProject);
     
-    // Update the message with the edited project
+    // Find the message containing this project and update it without triggering scroll
     setMessages(prev => prev.map(msg => {
       if (!isStringContent(msg.content) && 
           msg.content.type === 'project' && 
@@ -662,10 +700,10 @@ const ChatWidget: React.FC = () => {
     switch (message.type) {
       case 'user':
         return (
-          <div className="flex justify-end mb-1.5 mb-1 xs:mb-0.5">
-            <div className="bg-blue-500 text-white rounded-lg py-1 px-2 py-0.5 xs:py-0.5 px-1.5 xs:px-1 max-w-[80%]">
-              <p className="text-sm">{isStringContent(message.content) ? message.content : message.content.content}</p>
-              <span className="text-xs text-blue-100 block mt-0.5 xs:mt-0">
+          <div className="flex justify-end mb-1.5 mb-1 xs:mb-0.5 md:mb-3">
+            <div className="bg-blue-500 text-white rounded-lg py-1 px-2 py-0.5 xs:py-0.5 px-1.5 xs:px-1 md:py-2 md:px-4 max-w-[80%] shadow-sm">
+              <p className="text-sm md:text-base">{isStringContent(message.content) ? message.content : message.content.content}</p>
+              <span className="text-xs md:text-sm text-blue-100 block mt-0.5 xs:mt-0 md:mt-1">
                 {format(message.timestamp, 'h:mm a')}
               </span>
             </div>
@@ -675,15 +713,15 @@ const ChatWidget: React.FC = () => {
       case 'system':
         if (!isStringContent(message.content) && message.content.type === 'text' && message.content.data?.isLoading) {
           // Enhanced loading visualization
-          return (
-            <div className="flex justify-start mb-1.5 mb-1 xs:mb-0.5">
-              <div className="bg-gray-200 text-gray-800 rounded-lg py-1 px-2 py-0.5 xs:py-0.5 px-1.5 xs:px-1 max-w-[80%]">
+        return (
+          <div className="flex justify-start mb-1.5 mb-1 xs:mb-0.5 md:mb-3">
+            <div className="bg-gray-200 text-gray-800 rounded-lg py-1 px-2 py-0.5 xs:py-0.5 px-1.5 xs:px-1 md:py-2 md:px-4 max-w-[80%] shadow-sm">
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                  <p className="text-sm">{message.content.content}</p>
+                  <div className="animate-spin h-4 w-4 md:h-5 md:w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                  <p className="text-sm md:text-base">{message.content.content}</p>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Analyzing: {message.content.data.fileName}</p>
-                <span className="text-xs text-gray-500 block mt-0.5 xs:mt-0">
+                <p className="text-xs md:text-sm text-gray-500 mt-1">Analyzing: {message.content.data.fileName}</p>
+                <span className="text-xs md:text-sm text-gray-500 block mt-0.5 xs:mt-0 md:mt-1">
                   {format(message.timestamp, 'h:mm a')}
                 </span>
               </div>
@@ -692,9 +730,9 @@ const ChatWidget: React.FC = () => {
         }
         
         return (
-          <div className="flex justify-start mb-1.5 mb-1 xs:mb-0.5">
-            <div className="bg-gray-200 text-gray-800 rounded-lg py-1 px-2 py-0.5 xs:py-0.5 px-1.5 xs:px-1 max-w-[80%]">
-              <p className="text-sm">{isStringContent(message.content) ? message.content : message.content.content}</p>
+          <div className="flex justify-start mb-1.5 mb-1 xs:mb-0.5 md:mb-3">
+            <div className="bg-gray-200 text-gray-800 rounded-lg py-1 px-2 py-0.5 xs:py-0.5 px-1.5 xs:px-1 md:py-2 md:px-4 max-w-[80%] shadow-sm">
+              <p className="text-sm md:text-base">{isStringContent(message.content) ? message.content : message.content.content}</p>
               
               {/* Add button for appointment confirmation messages */}
               {!isStringContent(message.content) && 
@@ -722,14 +760,14 @@ const ChatWidget: React.FC = () => {
                     // Close the chat modal
                     setIsOpen(false);
                   }}
-                  className="inline-flex items-center gap-1 text-blue-500 text-xs underline mt-1.5 mt-1 xs:mt-0.5"
+                  className="inline-flex items-center gap-1 text-blue-500 text-xs md:text-sm underline mt-1.5 mt-1 xs:mt-0.5 md:mt-2"
                 >
-                  <Calendar className="w-3 h-3" />
+                  <Calendar className="w-3 h-3 md:w-4 md:h-4" />
                   View in Calendar
                 </Link>
               )}
               
-              <span className="text-xs text-gray-500 block mt-0.5 xs:mt-0">
+              <span className="text-xs md:text-sm text-gray-500 block mt-0.5 xs:mt-0 md:mt-1">
                 {format(message.timestamp, 'h:mm a')}
               </span>
             </div>
@@ -739,9 +777,9 @@ const ChatWidget: React.FC = () => {
       case 'response':
         if (!isStringContent(message.content)) {
           if (message.content.type === 'appointment') {
-            return (
-              <div className="flex justify-start mb-1.5 mb-1 xs:mb-0.5">
-                <div className="bg-white border border-gray-300 rounded-lg py-1.5 px-2 py-1 xs:py-0.5 px-1.5 xs:px-1 max-w-[85%] w-full shadow-sm">
+        return (
+          <div className="flex justify-start mb-1.5 mb-1 xs:mb-0.5">
+            <div className="bg-white border border-gray-300 rounded-lg py-1.5 px-2 py-1 xs:py-0.5 px-1.5 xs:px-1 max-w-[85%] w-full shadow-sm">
                   <div className="flex justify-between items-center">
                     <p className="font-medium text-gray-800 mb-1 mb-0.5 xs:mb-0.5 text-sm">Appointment Details</p>
                     {!message.content.data.appointmentCreated && (
@@ -773,77 +811,77 @@ const ChatWidget: React.FC = () => {
                       </div>
                     )}
                   
-                    <div className="flex items-start gap-1 mb-1 mb-0.5 xs:mb-0.5">
-                      <Calendar className="w-4 h-4 w-3.5 xs:w-3 h-3.5 xs:h-3 text-blue-500 mt-0.5" />
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">
+                  <div className="flex items-start gap-1 mb-1 mb-0.5 xs:mb-0.5">
+                    <Calendar className="w-4 h-4 w-3.5 xs:w-3 h-3.5 xs:h-3 text-blue-500 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">
                           {format(new Date(message.content.data.date), 'EEEE, MMMM d, yyyy')}
-                        </p>
-                        <p className="text-gray-600 text-xs">
+                      </p>
+                      <p className="text-gray-600 text-xs">
                           {format(new Date(message.content.data.date), 'h:mm a')} ({message.content.data.duration} minutes)
-                        </p>
-                      </div>
+                      </p>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-1.5 gap-1 xs:gap-0.5 mb-1.5 mb-1 xs:mb-0.5">
-                      <div>
-                        <p className="text-xs xs:text-[10px] text-gray-500">Client</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-1.5 gap-1 xs:gap-0.5 mb-1.5 mb-1 xs:mb-0.5">
+                    <div>
+                      <p className="text-xs xs:text-[10px] text-gray-500">Client</p>
                         <p className="text-sm xs:text-xs">{message.content.data.clientName}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs xs:text-[10px] text-gray-500">Tailor</p>
+                    </div>
+                    <div>
+                      <p className="text-xs xs:text-[10px] text-gray-500">Tailor</p>
                         <p className="text-sm xs:text-xs">{message.content.data.tailor}</p>
-                      </div>
                     </div>
-                    
-                    <div className="mb-1.5 mb-1 xs:mb-0.5">
-                      <p className="text-xs xs:text-[10px] text-gray-500">Notes</p>
+                  </div>
+                  
+                  <div className="mb-1.5 mb-1 xs:mb-0.5">
+                    <p className="text-xs xs:text-[10px] text-gray-500">Notes</p>
                       <p className="text-sm xs:text-xs">{message.content.data.notes}</p>
-                    </div>
-                    
+                  </div>
+                  
                     {message.content.data.inventoryNeeded && message.content.data.inventoryNeeded !== "None" && (
-                      <div className="mb-1.5 mb-1 xs:mb-0.5">
-                        <p className="text-xs xs:text-[10px] text-gray-500">Inventory Needed</p>
+                    <div className="mb-1.5 mb-1 xs:mb-0.5">
+                      <p className="text-xs xs:text-[10px] text-gray-500">Inventory Needed</p>
                         <p className="text-sm xs:text-xs">{message.content.data.inventoryNeeded}</p>
-                      </div>
-                    )}
-                    
+                    </div>
+                  )}
+                  
                     {!message.content.data.appointmentCreated && (
-                      <div className="flex gap-1.5 gap-1 xs:gap-0.5 mt-1.5 mt-1 xs:mt-0.5">
-                        <Button 
+                  <div className="flex gap-1.5 gap-1 xs:gap-0.5 mt-1.5 mt-1 xs:mt-0.5">
+                    <Button 
                           onClick={() => {
                             if (!isStringContent(message.content)) {
                               createEvent(message.content.data as EventData);
                             }
                           }}
-                          className="bg-blue-500 hover:bg-blue-600 text-white text-sm xs:text-xs py-0.5 xs:py-0.5 h-auto"
-                        >
-                          Add to Calendar
-                        </Button>
-                        <Button 
-                          onClick={() => {
-                            setMessages(prev => [...prev, {
-                              id: uuidv4(),
-                              type: 'system',
-                              content: 'No problem! The appointment was not added.',
-                              timestamp: new Date()
-                            }])
-                          }}
-                          variant="outline"
-                          className="text-sm xs:text-xs py-0.5 xs:py-0.5 h-auto"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <span className="text-xs text-gray-500 block mt-0.5 xs:mt-0">
-                    {format(message.timestamp, 'h:mm a')}
-                  </span>
+                      className="bg-blue-500 hover:bg-blue-600 text-white text-sm xs:text-xs py-0.5 xs:py-0.5 h-auto"
+                    >
+                      Add to Calendar
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setMessages(prev => [...prev, {
+                          id: uuidv4(),
+                          type: 'system',
+                          content: 'No problem! The appointment was not added.',
+                          timestamp: new Date()
+                        }])
+                      }}
+                      variant="outline"
+                      className="text-sm xs:text-xs py-0.5 xs:py-0.5 h-auto"
+                    >
+                      Cancel
+                    </Button>
                 </div>
-              </div>
-            )
+              )}
+                  </div>
+              
+              <span className="text-xs text-gray-500 block mt-0.5 xs:mt-0">
+                {format(message.timestamp, 'h:mm a')}
+              </span>
+            </div>
+          </div>
+        )
           } else if (message.content.type === 'project') {
             // Project Card
             const project = message.content.data as ExtendedProject;
@@ -1315,29 +1353,29 @@ const ChatWidget: React.FC = () => {
       <img 
         src={chatUploadIcon} 
         alt="Chat" 
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full transition-all cursor-pointer"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full transition-all cursor-pointer hover:scale-110 hover:shadow-md"
         onClick={() => setIsOpen(true)}
       />
 
       {/* Chat window */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 p-1 xs:p-0">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col h-[600px] max-h-[95vh] animate-in fade-in slide-in-from-bottom-10 duration-300">
+        <div className="fixed inset-0 md:inset-auto md:bottom-0 md:right-0 z-50 flex md:items-end justify-center bg-black/50 md:bg-transparent p-0 md:p-2">
+          <div className="bg-white rounded-none md:rounded-xl shadow-xl md:shadow-2xl w-full h-full md:max-w-2xl md:h-[700px] md:max-h-[95vh] md:mb-6 md:mr-6 flex flex-col animate-in fade-in duration-200 md:zoom-in-95 origin-bottom-right">
             {/* Header */}
-            <div className="flex items-center justify-between p-2 p-1.5 xs:p-1 border-b">
-              <h2 className="text-lg text-base font-semibold">TailorMade Assistant</h2>
+            <div className="flex items-center justify-between p-2 md:p-4 border-b sticky top-0 bg-white z-10">
+              <h2 className="text-lg md:text-xl font-semibold">TailorMade Assistant</h2>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded-full hover:bg-gray-100"
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
               >
-                <X className="w-5 h-5 xs:w-4 xs:h-4" />
+                <X className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             </div>
             
             {/* Messages container */}
-            <div className="flex-1 overflow-y-auto p-2 p-1.5 xs:p-1">
+            <div className="flex-1 overflow-y-auto p-2 md:pb-2">
               {messages.map((message) => (
-                <div key={message.id}>
+                <div key={message.id} className="md:mb-2">
                   {renderMessage(message)}
                 </div>
               ))}
@@ -1345,23 +1383,8 @@ const ChatWidget: React.FC = () => {
             </div>
             
             {/* Input area */}
-            <div className="p-1.5 p-1 xs:p-0.5 border-t">
-              <div className="flex items-center gap-1 xs:gap-0.5">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-1 p-0.5 rounded-full text-gray-500 hover:bg-gray-100 hover:text-blue-500"
-                  disabled={isUploading}
-                >
-                  <Image className="w-5 h-5 xs:w-4 xs:h-4" />
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    accept="image/*"
-                    className="hidden"
-                    disabled={isUploading}
-                  />
-                </button>
+            <div className="p-2 border-t sticky bottom-0 bg-white z-10">
+              <div className="flex items-center gap-2">
                 
                 <div className="flex-1 relative">
                   <input
@@ -1374,25 +1397,41 @@ const ChatWidget: React.FC = () => {
                       }
                     }}
                     placeholder="Type a message..."
-                    className="w-full border rounded-full px-2.5 py-1 px-2 xs:px-1.5 py-0.5 xs:py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8"
+                    className="w-full border rounded-full px-4 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8"
                     disabled={isUploading}
                   />
                   {isUploading && (
-                    <div className="absolute right-2 right-1.5 xs:right-1 top-1/2 transform -translate-y-1/2">
-                      <Loader2 className="w-4 h-4 w-3.5 xs:w-3 h-3.5 xs:h-3 animate-spin text-blue-500" />
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
                     </div>
                   )}
                 </div>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-blue-500 transition-colors"
+                  disabled={isUploading}
+                >
+                  <Image className="w-5 h-5 md:w-5 md:h-5" />
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                </button>
                 
                 <button
                   onClick={handleSendMessage}
                   className={cn(
-                    "p-1 p-0.5 xs:p-0.5 rounded-full bg-blue-500 text-white",
+                    "p-2 rounded-full bg-blue-500 text-white",
                     inputValue.trim() === '' ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
                   )}
                   disabled={inputValue.trim() === '' || isUploading}
                 >
-                  <Send className="w-4 h-4 w-3.5 xs:w-3 h-3.5 xs:h-3" />
+                  <Send className="w-5 h-5" />
                 </button>
               </div>
             </div>

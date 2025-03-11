@@ -129,7 +129,7 @@ const Home: React.FC = () => {
       <div className="px-4 sm:px-0 mx-auto w-full max-w-full">
         {/* Greeting */}
         <div className="p-2 mb-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hello, John!</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hello, Darren!</h1>
           <p className="text-sm sm:text-base text-gray-600">Welcome back to your TailorMade dashboard</p>
         </div>
         
