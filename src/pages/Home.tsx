@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import PageLayout from '../components/PageLayout';
 import { Check, X, ChevronDown, ChevronUp, Maximize2, FolderKanban } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, compareDesc } from 'date-fns';
 import useProjectServerStore from '../stores/projectServerStore';
 import useActionStore from '../stores/actionStore';
-import { Action, ActionPriority, ActionPriorityShim, ActionState } from '../types';
+import { Action, ActionPriority, ActionPriorityShim, ActionState, Project } from '../types';
 import { Link } from 'react-router-dom';
 
 // Define Action type for better type safety
@@ -15,7 +15,7 @@ const Home: React.FC = () => {
   const { actions, runAction, deleteAction } = useActionStore()
   
   // Modified state for today's projects with progress added
-  const [todaysProjects, setTodaysProjects] = useState<Array<{ id: string; name: string; progress: number; clientName: string; dueDate?: any }>>([]);
+  const [todaysProjects, setTodaysProjects] = useState<Array<Project>>([]);
   
   // Fetch projects when component mounts
   useEffect(() => {
@@ -26,21 +26,8 @@ const Home: React.FC = () => {
   useEffect(() => {
     if (projects.length > 0) {
       // Show all projects with randomly generated progress values
-      const projectsWithProgress = projects
-        .map(project => {
-          // Generate a random progress value in increments of 5% (1/20th of 100)
-          const randomProgress = Math.floor(Math.random() * 21) * 5; // 0, 5, 10, ..., 95, 100
-          
-          return {
-            id: project.id,
-            name: project.name,
-            progress: randomProgress,
-            clientName: project.clientName,
-            dueDate: project.dueDate
-          };
-        });
-        
-      setTodaysProjects(projectsWithProgress);
+      const sorted = projects.sort((a, b) => compareDesc(b.dueDate, a.dueDate))
+      setTodaysProjects(sorted);
     }
   }, [projects]);
 
@@ -66,14 +53,14 @@ const Home: React.FC = () => {
     await runAction(id)
     
     // Remove the completed action after a brief delay to show the completed state
-    setTimeout(() => {
-      deleteAction(id);
-    }, 500);
+    setTimeout(async() => {
+      // await deleteAction(id);
+    }, 1000 * 60);
   };
 
   // Handle dismiss/cancel button
-  const handleDismissAction = (id: string) => {
-    deleteAction(id);
+  const handleDismissAction = async (id: string) => {
+    await deleteAction(id);
   };
 
   // Toggle section expanded state
@@ -129,8 +116,8 @@ const Home: React.FC = () => {
       <div className="px-4 sm:px-0 mx-auto w-full max-w-full">
         {/* Greeting */}
         <div className="p-2 mb-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hello, John!</h1>
-          <p className="text-sm sm:text-base text-gray-600">Welcome back to your TailorMade dashboard</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hello, Darren!</h1>
+          <p className="text-sm sm:text-base text-gray-600">Welcome to your TailorMade dashboard</p>
         </div>
         
         {/* Main grid layout */}
@@ -179,7 +166,7 @@ const Home: React.FC = () => {
                     className="space-y-4 relative overflow-hidden" 
                     style={{ 
                       maxHeight: !expandedSections.projects && todaysProjects.length > 2 
-                        ? 'calc(2 * 50px + 16px)' // Height for 2 projects
+                        ? 'calc(2 * 100px + 16px)' // Height for 2 projects
                         : '2000px', // Use a very large value instead of 'auto' for smoother animation
                       transition: 'max-height 0.3s ease-in-out'
                     }}
@@ -193,7 +180,8 @@ const Home: React.FC = () => {
                         <div className="flex justify-between items-center mb-2">
                           <div>
                             <span className="font-medium text-sm sm:text-base">{project.name}</span>
-                            <div className="text-xs text-gray-500">for {project.clientName}</div>
+                            <div className="text-xs text-gray-500">Due - <span className='font-bold'>{format(project.dueDate, 'EEEE, MMMM do, yyyy')}</span></div>
+                            <div className="text-xs text-gray-500">Description - <span className='font-bold'>{project.description}</span></div>
                           </div>
                           <span className="text-xs sm:text-sm text-gray-600">{project.progress}%</span>
                         </div>
@@ -234,7 +222,7 @@ const Home: React.FC = () => {
             {/* Actions */}
             <section>
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-base sm:text-lg font-medium">Actions</h2>
+                <h2 className="text-base sm:text-lg font-medium">Assistant Actions</h2>
                 <button 
                   onClick={() => toggleSectionExpand('actions')}
                   className="text-xs sm:text-sm text-blue-600"
@@ -251,7 +239,7 @@ const Home: React.FC = () => {
                       : '2000px' // Effectively unlimited
                   }}
                 >
-                  {getVisibleActions().map((action, index) => (
+                  {getVisibleActions().sort((a: Action, b: Action) => b.priority - a.priority).map((action, index) => (
                     <div 
                       key={action.id} 
                       className={`flex items-center justify-between pb-4 ${
@@ -267,6 +255,7 @@ const Home: React.FC = () => {
                           {index === 2 && actions.length > 3 && !expandedSections.actions ? (
                             <>
                               <div className="font-medium">{action.name}</div>
+                              <div className="text-sm">{action.description}</div>
                               <div className="text-sm text-gray-500">
                                 {action.state == ActionState.Done ? (
                                   <>
@@ -280,7 +269,7 @@ const Home: React.FC = () => {
                                 ) : (
                                   <>
                                     <div className="text-xs text-gray-500">
-                                      Priority: {action.priority === 2 ? "High" : action.priority === 1 ? "Medium" : "Low"}
+                                      Priority: {ActionPriorityShim[action.priority]}
                                     </div>
                                   </>
                                 )}
@@ -289,6 +278,9 @@ const Home: React.FC = () => {
                           ) : (
                             <>
                               <div className="font-medium">
+                                {action.name}
+                              </div>
+                              <div className="text-sm">
                                 {action.description}
                               </div>
                               <div className="text-sm text-gray-500">
@@ -304,7 +296,7 @@ const Home: React.FC = () => {
                                 ) : (
                                   <>
                                     <div className="text-xs text-gray-500">
-                                      Priority: {action.priority === 2 ? "High" : action.priority === 1 ? "Medium" : "Low"}
+                                      Priority: {ActionPriorityShim[action.priority]}
                                     </div>
                                   </>
                                 )}

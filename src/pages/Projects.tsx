@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { Project, ActionState, Event } from '../types'
+import { Project, ActionState, Event, ActionStateShim } from '../types'
 import useProjectServerStore from '../stores/projectServerStore'
-import { format } from 'date-fns'
+import { format, isPast } from 'date-fns'
 import { Calendar, Clock, Users, FileText, ArrowLeft, Plus, Pencil, Trash2, X, Check, AlertTriangle } from 'lucide-react'
 import EventViewDialog from '../components/Calendar/EventViewDialog'
 
@@ -551,19 +551,18 @@ const Projects: React.FC = () => {
           {/* Actions */}
           {project.actions && project.actions.length > 0 && (
             <div className="p-6">
-              <h3 className="font-medium text-gray-900 mb-3">Actions</h3>
+              <h3 className="font-medium text-gray-900 mb-3">Assistant Actions</h3>
               <div className="space-y-2">
                 {project.actions.map(action => (
                   <div key={action.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium text-gray-900">{action.name}</h4>
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        action.state === ActionState.Todo ? 'bg-gray-100 text-gray-800' : 
-                        action.state === ActionState.InProgress ? 'bg-yellow-100 text-yellow-800' :
+                        action.state === 0 ? 'bg-gray-100 text-gray-800' : 
+                        action.state === 1 ? 'bg-yellow-100 text-yellow-800' :
                         'bg-green-100 text-green-800'
                       }`}>
-                        {action.state === ActionState.Todo ? 'To Do' : 
-                         action.state === ActionState.InProgress ? 'In Progress' : 'Done'}
+                        {ActionStateShim[action.state]}
                       </span>
                     </div>
                     <p className="text-gray-700 mt-1 text-sm">{action.description}</p>
@@ -660,9 +659,9 @@ const Projects: React.FC = () => {
                     <span className="text-sm text-gray-600">Appointments</span>
                     <div className="flex items-center">
                       <span className="font-medium text-gray-900 mr-1">
-                        {project.appointments?.length || 0}
+                        {project.appointments?.filter(a => isPast(a.date)).length || 0}
                       </span>
-                      <span className="text-xs text-gray-500">/ {project.appointmentsNeeded}</span>
+                      <span className="text-xs text-gray-500">/ {project.appointments?.length}</span>
                     </div>
                   </div>
                 </div>

@@ -15,6 +15,7 @@ export interface Calendar {
 export interface Event {
   id: string
   title: string
+  date: Date
   description?: string
   start: Date
   end: Date
@@ -54,6 +55,13 @@ export enum ActionPriority {
   High = 'High'
 }
 
+
+export const ActionStateShim = {
+  0: 'Todo',
+  1: 'InProgress',
+  2: 'Done'
+};
+
 export const ActionPriorityShim = {
   0: 'Low',
   1: 'Medium',
@@ -83,6 +91,7 @@ export interface Project {
   measurements: string
   notes: string
   dueDate: Date
+  progress: number
   actions: Action[]
   appointments: Event[]
 }

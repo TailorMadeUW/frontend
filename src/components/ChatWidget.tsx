@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { format, parse, addMinutes } from 'date-fns'
 import api from '../lib/api'
 import { Link, useNavigate } from 'react-router-dom'
-import { Action, ActionState, ActionPriority, ActionType, Project, Event } from '../types'
+import { Action, ActionState, ActionPriority, ActionType, Project, Event, ActionPriorityShim } from '../types'
 import useProjectServerStore from '../stores/projectServerStore'
 
 // Universal content type for chat messages
@@ -72,7 +72,7 @@ const ChatWidget: React.FC = () => {
     {
       id: uuidv4(),
       type: 'system',
-      content: 'Welcome to TailorMade chat! How can I help you today?',
+      content: 'Hey Darren, how can I help you today?',
       timestamp: new Date()
     }
   ])
@@ -899,7 +899,7 @@ const ChatWidget: React.FC = () => {
                           value={project.description}
                           onChange={(e) => updateProjectField(project, 'description', e.target.value)}
                           disabled={isCreated}
-                          className="w-full p-1 text-sm border rounded min-h-[60px]"
+                          className="w-full p-1 text-sm border rounded min-h-[100px]"
                         />
                       </div>
                     </div>
@@ -976,7 +976,7 @@ const ChatWidget: React.FC = () => {
                     {/* Appointments Section */}
                     <div className="mb-2">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs font-semibold text-gray-700">Appointments ({project.appointments?.length || 0})</p>
+                        <p className="text-md font-semibold text-gray-700">Appointments ({project.appointments?.length || 0})</p>
                         {!isCreated && (
                           <Button 
                             onClick={() => addAppointment(project)}
@@ -1133,7 +1133,7 @@ const ChatWidget: React.FC = () => {
                     {/* Actions Section */}
                     <div className="mb-2">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs font-semibold text-gray-700">Actions ({project.actions?.length || 0})</p>
+                        <p className="text-md font-semibold text-gray-700">Assistant Actions ({project.actions?.length || 0})</p>
                         {!isCreated && (
                           <Button 
                             onClick={() => addAction(project)}
@@ -1184,18 +1184,6 @@ const ChatWidget: React.FC = () => {
                                       <option value={ActionPriority.High}>High</option>
                                     </select>
                                   </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500">Status</p>
-                                    <select
-                                      value={action.state}
-                                      onChange={(e) => updateAction(project, action.id, 'state', e.target.value)}
-                                      className="w-full p-1 text-xs border rounded"
-                                    >
-                                      <option value={ActionState.Todo}>To Do</option>
-                                      <option value={ActionState.InProgress}>In Progress</option>
-                                      <option value={ActionState.Done}>Done</option>
-                                    </select>
-                                  </div>
                                 </div>
                                 
                                 <div className="flex justify-end gap-2 mt-2">
@@ -1231,7 +1219,7 @@ const ChatWidget: React.FC = () => {
                                 </div>
                                 <p className="text-gray-600 text-xs mb-1">{action.description}</p>
                                 <div className="flex items-center text-xs text-gray-500 mb-1">
-                                  <span className="mr-2">Priority: {action.priority}</span>
+                                  <span className="mr-2">Priority: {ActionPriorityShim[action.priority]}</span>
                                 </div>
                                 {!isCreated && (
                                   <div className="flex justify-end">
@@ -1243,6 +1231,16 @@ const ChatWidget: React.FC = () => {
                                     >
                                       <Edit className="h-3 w-3 mr-1" />
                                       Edit
+                                    </Button>
+                                    <Button
+                                      value={action.state}
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => updateAction(project, action.id, 'confirmed', true)}
+                                      className="h-6 text-xs p-1"
+                                    >
+                                      <CheckSquare className="h-3 w-3 mr-1" />
+                                      {action.confirmed ? 'Confirmed' : 'Confirm'}
                                     </Button>
                                   </div>
                                 )}
