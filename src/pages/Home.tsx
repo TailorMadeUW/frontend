@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PageLayout from '../components/PageLayout';
-import { Check, X, ChevronDown, ChevronUp, Maximize2, FolderKanban } from 'lucide-react';
+import { Check, X, ChevronDown, ChevronUp, FolderKanban, Clock9 } from 'lucide-react';
 import { format, compareDesc } from 'date-fns';
 import useProjectServerStore from '../stores/projectServerStore';
 import useActionStore from '../stores/actionStore';
@@ -247,8 +247,10 @@ const Home: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 min-w-10 rounded-full bg-slate-500 flex items-center justify-center text-white">
-                          {action.name.substring(0, 1)}
+                        <div className="w-10 h-10 rounded-full bg-slate-500 flex items-center justify-center text-white font-medium overflow-hidden flex-shrink-0">
+                          <span className="inline-flex items-center justify-center h-full w-full text-lg">
+                            {action.name.substring(0, 1)}
+                          </span>
                         </div>
                         <div>
                           {/* For the third item when we have more than 3, just show the person's name */}
@@ -429,7 +431,7 @@ const Home: React.FC = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                 <button className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-3 sm:p-4 rounded-lg shadow-sm transition-colors">
                   <div className="text-center">
-                    <Maximize2 className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1" />
+                    <Clock9 className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1" />
                     <span className="text-xs sm:text-sm">New Appointment</span>
                   </div>
                 </button>

@@ -14,12 +14,13 @@ import Alerts from './pages/Alerts'
 import Chats from './pages/Chats'
 import Profile from './pages/Profile'
 import LoadingScreen from './components/LoadingScreen'
+import ScrollToTop from './components/ScrollToTop'
 import useLoadingStore from './stores/loadingStore'
 import useCalendarStore from './stores/calendarStore'
 import useCalendarServerStore from './stores/calendarServerStore'
 import useProjectServerStore from './stores/projectServerStore'
 import useActionStore from './stores/actionStore'
-import Projects from './pages/Projects'
+import Projects, { ProjectsWrapper } from './pages/Projects'
 
 const App: React.FC = () => {
   const { isLoading, initializeApp, resourceLoaded, setLoading } = useLoadingStore()
@@ -61,6 +62,7 @@ const App: React.FC = () => {
     <>
       <LoadingScreen isLoading={isLoading} />
       <Router>
+        <ScrollToTop />
         <div className="flex h-screen bg-gray-50">
           <SideBar />
           <main className="flex-1">
@@ -77,8 +79,10 @@ const App: React.FC = () => {
               <Route path="/app/alerts" element={<Alerts />} />
               <Route path="/app/chats" element={<Chats />} />
               <Route path="/app/profile" element={<Profile />} />
-              <Route path="/app/projects" element={<Projects />} />
-              <Route path="/app/projects/:projectId" element={<Projects />} />
+              
+              {/* Projects routes with improved handling */}
+              <Route path="/app/projects" element={<ProjectsWrapper />} />
+              <Route path="/app/projects/:projectId" element={<ProjectsWrapper />} />
             </Routes>
           </main>
           <Toast />

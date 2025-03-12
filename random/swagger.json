@@ -178,6 +178,84 @@
         }
       }
     },
+    "/Action/etsy": {
+      "get": {
+        "tags": [
+          "Action"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Action"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Action"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Action"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Action/callback": {
+      "get": {
+        "tags": [
+          "Action"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/Action/code": {
+      "get": {
+        "tags": [
+          "Action"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/Agent/note": {
       "post": {
         "tags": [
@@ -755,6 +833,14 @@
             "type": "string",
             "nullable": true
           },
+          "targetName": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetCount": {
+            "type": "integer",
+            "format": "int32"
+          },
           "description": {
             "type": "string",
             "nullable": true
@@ -767,6 +853,12 @@
           },
           "state": {
             "$ref": "#/components/schemas/ActionState"
+          },
+          "confirmed": {
+            "type": "boolean"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
           }
         },
         "additionalProperties": false
@@ -842,6 +934,20 @@
         },
         "additionalProperties": false
       },
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "urlLink": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "Project": {
         "type": "object",
         "properties": {
@@ -885,9 +991,17 @@
             "type": "string",
             "nullable": true
           },
+          "progress": {
+            "type": "number",
+            "format": "double"
+          },
           "dueDate": {
             "type": "string",
             "format": "date-time"
+          },
+          "extractedNotes": {
+            "type": "string",
+            "nullable": true
           },
           "appointments": {
             "type": "array",
@@ -901,6 +1015,10 @@
             "items": {
               "$ref": "#/components/schemas/Action"
             },
+            "nullable": true
+          },
+          "reasoning": {
+            "type": "string",
             "nullable": true
           }
         },
