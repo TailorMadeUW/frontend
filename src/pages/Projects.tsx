@@ -744,14 +744,14 @@ const Projects: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-b">
                 {project?.measurements && (
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-1 text-sm">Measurements</h3>
+                    <h3 className="font-medium text-gray-900 mb-1 text-md">Measurements</h3>
                     <p className="text-gray-700 text-xs whitespace-pre-line">{project.measurements}</p>
                   </div>
                 )}
                 
                 {project?.inventoryNeeded && (
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-1 text-sm">Inventory Needed</h3>
+                    <h3 className="font-medium text-gray-900 mb-1 text-md">Inventory Needed</h3>
                     <p className="text-gray-700 text-xs whitespace-pre-line">{project.inventoryNeeded}</p>
                   </div>
                 )}
@@ -860,7 +860,7 @@ const Projects: React.FC = () => {
                               </div>
                               <p className="text-gray-700 mt-0.5 text-xs">{enhancedAppointment.description || enhancedAppointment.data?.description || "No description"}</p>
                               <div className="mt-1 flex justify-between text-xs">
-                                <span className="text-gray-500">Tailor: {enhancedAppointment.employee || enhancedAppointment.data?.employee || "Not assigned"}</span>
+                                <span className="text-gray-500">Tailor: {enhancedAppointment.tailor || enhancedAppointment.data?.tailor || "Not assigned"}</span>
                                 <span className="text-gray-500">
                                   Duration: {Math.round((endDate.getTime() - startDate.getTime()) / 60000) || 0} min
                                 </span>

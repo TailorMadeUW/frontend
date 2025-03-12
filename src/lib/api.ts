@@ -5,8 +5,7 @@
  */
 
 // API base URL - use proxy in development
-const API_BASE_URL = import.meta.env.PROD
-  ? '/api' : '/api';
+const API_BASE_URL = 'https://tailormadeserver-dbhmbqg0b9eda3dd.westus2-01.azurewebsites.net';
 
 /**
  * Note API endpoints
@@ -22,7 +21,7 @@ export const noteApi = {
         method: 'POST',
         body: formData,
         // Allow credentials for CORS
-        credentials: 'include'
+        // credentials: 'include'
       });
       
       if (!response.ok) {
@@ -169,7 +168,7 @@ export const noteApi = {
         method: 'POST',
         body: formData,
         // Allow credentials for CORS
-        credentials: 'include'
+        // credentials: 'include'
       });
       
       if (!response.ok) {
@@ -259,7 +258,7 @@ export const calendarApi = {
     try {
       const response = await fetch(`${API_BASE_URL}/calendar`, {
         method: 'GET',
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -310,7 +309,7 @@ export const calendarApi = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(appointmentData),
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -339,7 +338,7 @@ export const calendarApi = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(appointmentData),
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -390,7 +389,7 @@ export const projectApi = {
     try {
       const response = await fetch(`${API_BASE_URL}/project`, {
         method: 'GET',
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -441,7 +440,7 @@ export const projectApi = {
     try {
       const response = await fetch(`${API_BASE_URL}/project/${id}`, {
         method: 'GET',
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -471,7 +470,7 @@ export const projectApi = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(projectData),
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -501,7 +500,7 @@ export const projectApi = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(projectData),
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -527,7 +526,7 @@ export const projectApi = {
     try {
       const response = await fetch(`${API_BASE_URL}/project/${id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -554,7 +553,7 @@ export const actionsApi = {
     try {
       const response = await fetch(`${API_BASE_URL}/action`, {
         method: 'GET',
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -613,7 +612,7 @@ export const actionsApi = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(action),
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
@@ -639,7 +638,7 @@ export const actionsApi = {
     try {
       const response = await fetch(`${API_BASE_URL}/action/${id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        // credentials: 'include'
       });
 
       if (!response.ok) {
