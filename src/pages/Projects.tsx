@@ -1032,22 +1032,22 @@ const Projects: React.FC = () => {
                   
                   <div className="p-3">
                     <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-xs text-gray-600">Client</span>
-                      <span className="text-sm text-gray-900">{project.clientName}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center mb-1.5">
                       <span className="text-xs text-gray-600">Due Date</span>
                       <span className="text-sm text-gray-900">{format(new Date(project.dueDate), 'MMM d, yyyy')}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-xs text-gray-600">Assistant Actions</span>
+                      <span className="text-sm text-gray-900">{project.actions.length}</span>
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">Appointments</span>
                       <div className="flex items-center">
                         <span className="text-sm text-gray-900 mr-1">
-                          {project.appointments?.length || 0}
+                          {project.appointments?.filter(a => isPast(a.date)).length || 0}
                         </span>
-                        <span className="text-xs text-gray-500">/ {project.appointmentsNeeded}</span>
+                        <span className="text-xs text-gray-500">/ {project.appointments?.length}</span>
                       </div>
                     </div>
                   </div>
