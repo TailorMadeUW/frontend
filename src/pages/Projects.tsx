@@ -419,7 +419,7 @@ const Projects: React.FC = () => {
     
     if (!project) {
       return (
-        <div className="container max-w-4xl mx-auto px-4 py-8">
+        <div className="container max-w-4xl mx-auto px-4 py-16">
           <Link to="/app/projects" className="flex items-center text-blue-500 mb-4">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Projects
@@ -432,8 +432,8 @@ const Projects: React.FC = () => {
     }
     
     return (
-      <div className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-4">
+      <div className="container max-w-4xl mx-auto px-4 py-16">
+        <div className="flex justify-between items-center mb-4 overflow-y-auto">
           <Link to="/app/projects" className="flex items-center text-blue-500">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Projects
@@ -456,7 +456,7 @@ const Projects: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-y-auto">
           {/* Project Header */}
           <div className="border-b p-6">
             <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
@@ -566,6 +566,7 @@ const Projects: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-gray-700 mt-1 text-sm">{action.description}</p>
+                    {action.type == 2 && <Link target="_blank" to={action.meta?.urlLink} className="text-green-700 mt-1 text-sm">See Cart Link</Link>}
                   </div>
                 ))}
               </div>
@@ -608,7 +609,7 @@ const Projects: React.FC = () => {
   
   // Otherwise, show the projects list view
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8">
+    <div className="container max-w-6xl mx-auto px-4 py-16">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
         <button 
@@ -638,7 +639,7 @@ const Projects: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map(project => (
             <Link key={project.id} to={`/app/projects/${project.id}`} className="block">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-y-auto hover:shadow-md transition-shadow">
                 <div className="p-5 border-b">
                   <h2 className="font-bold text-gray-900 text-lg truncate">{project.name}</h2>
                   <p className="text-gray-600 text-sm mt-1 line-clamp-2">{project.description}</p>

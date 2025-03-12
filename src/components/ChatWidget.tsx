@@ -137,7 +137,7 @@ const ChatWidget: React.FC = () => {
       content: {
         type: 'text',
         data: { isLoading: true, fileName: file.name },
-        content: 'Analyzing your image...'
+        content: 'Taking a look at your consultation notes...'
       },
       timestamp: new Date()
     }
@@ -156,7 +156,7 @@ const ChatWidget: React.FC = () => {
       setMessages(prev => [...prev, {
         id: uuidv4(),
         type: 'user',
-        content: `Uploaded image: ${file.name}`,
+        content: `Uploaded project image: ${file.name}`,
         timestamp: new Date()
       }]);
       
@@ -187,6 +187,13 @@ const ChatWidget: React.FC = () => {
           }))
         };
         
+        setMessages(prev => [...prev, {
+          id: uuidv4(),
+          type: 'system',
+          content: `${project.reasoning} Would you like to create this project?`,
+          timestamp: new Date()
+        }]);
+
         setEditingProject(preparedProject);
         
         // Create project message with the editable project
@@ -196,7 +203,7 @@ const ChatWidget: React.FC = () => {
           content: {
             type: 'project',
             data: preparedProject,
-            content: 'Based on the image you uploaded, I\'ve identified the following project details. You can edit them before creating the project:'
+            content: ''
           },
           timestamp: new Date()
         };
@@ -333,7 +340,7 @@ const ChatWidget: React.FC = () => {
       setMessages(prev => [...prev, {
         id: uuidv4(),
         type: 'system',
-        content: `Project "${project.name}" has been created successfully with ${project.appointments.length} appointments and ${project.actions.length} actions.`,
+        content: `Thank you for confirming, I've created the following project "${project.name}" with ${project.appointments.length} appointments and I will get started with ${project.actions.length} actions.`,
         timestamp: new Date()
       }]);
       

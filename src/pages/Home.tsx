@@ -181,7 +181,7 @@ const Home: React.FC = () => {
                           <div>
                             <span className="font-medium text-sm sm:text-base">{project.name}</span>
                             <div className="text-xs text-gray-500">Due - <span className='font-bold'>{format(project.dueDate, 'EEEE, MMMM do, yyyy')}</span></div>
-                            <div className="text-xs text-gray-500">Description - <span className='font-bold'>{project.description}</span></div>
+                            <div className="text-xs text-gray-500">Description - <span className='font-bold'>{project.description.substring(0, 60)} ...</span></div>
                           </div>
                           <span className="text-xs sm:text-sm text-gray-600">{project.progress}%</span>
                         </div>
