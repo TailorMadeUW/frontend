@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PageLayout from '../components/PageLayout';
-import { Check, X, ChevronDown, ChevronUp, Maximize2, FolderKanban, Clock9 } from 'lucide-react';
+import { Check, X, ChevronDown, ChevronUp, FolderKanban, Clock9 } from 'lucide-react';
 import { format } from 'date-fns';
 import useProjectServerStore from '../stores/projectServerStore';
 import useActionStore from '../stores/actionStore';
@@ -259,8 +259,10 @@ const Home: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-500 flex items-center justify-center text-white">
-                          {action.name.substring(0, 1)}
+                        <div className="w-10 h-10 rounded-full bg-slate-500 flex items-center justify-center text-white font-medium overflow-hidden flex-shrink-0">
+                          <span className="inline-flex items-center justify-center h-full w-full text-lg">
+                            {action.name.substring(0, 1)}
+                          </span>
                         </div>
                         <div>
                           {/* For the third item when we have more than 3, just show the person's name */}
@@ -280,7 +282,7 @@ const Home: React.FC = () => {
                                 ) : (
                                   <>
                                     <div className="text-xs text-gray-500">
-                                      Priority: {action.priority === 2 ? "High" : action.priority === 1 ? "Medium" : "Low"}
+                                      Priority: {action.priority === ActionPriority.High ? "High" : action.priority === ActionPriority.Medium ? "Medium" : "Low"}
                                     </div>
                                   </>
                                 )}
@@ -304,7 +306,7 @@ const Home: React.FC = () => {
                                 ) : (
                                   <>
                                     <div className="text-xs text-gray-500">
-                                      Priority: {action.priority === 2 ? "High" : action.priority === 1 ? "Medium" : "Low"}
+                                      Priority: {action.priority === ActionPriority.High ? "High" : action.priority === ActionPriority.Medium ? "Medium" : "Low"}
                                     </div>
                                   </>
                                 )}
