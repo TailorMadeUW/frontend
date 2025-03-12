@@ -757,11 +757,40 @@ const Projects: React.FC = () => {
                 )}
               </div>
               
+              {/* Actions */}
+              {project?.actions && Array.isArray(project.actions) && project.actions.length > 0 && (
+                <div className="p-4 border-b">
+                  <h3 className="font-medium text-gray-900 mb-2 text-md">Assistant Actions</h3>
+                  <div className="space-y-2">
+                    {project.actions.map(action => 
+                      action && action.id ? (
+                        <div key={action.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-gray-900">{action.name}</h4>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              action.state === 0 ? 'bg-gray-100 text-gray-800' : 
+                              action.state === 1 ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-green-100 text-green-800'
+                            }`}>
+                              {ActionStateShim[action.state]}
+                            </span>
+                          </div>
+                          <p className="text-gray-700 mt-1 text-sm">{action.description}</p>
+                          {action.targetName && <p className="text-grey-700 mt-1 text-sm">Name: {action.targetName}</p>}
+                          {action.type == 2 && <p className="text-grey-700 mt-1 text-sm">Quantity: {action.targetCount}</p>}
+                          {action.type == 2 && <Link target="_blank" to={action.meta?.urlLink} className="text-green-700 mt-1 text-sm">See Cart Link</Link>}
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                </div>
+              )}
+              
               {/* Appointments */}
               {project?.appointments && Array.isArray(project.appointments) && project.appointments.length > 0 && (
                 <div className="p-4 border-b">
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium text-gray-900 text-sm">Appointments</h3>
+                    <h3 className="font-medium text-gray-900 text-md">Appointments</h3>
                     <Link 
                       to="/app/calendar" 
                       className="text-xs text-blue-600 hover:text-blue-800"
@@ -848,32 +877,6 @@ const Projects: React.FC = () => {
                 </div>
               )}
               
-              {/* Actions */}
-              {project?.actions && Array.isArray(project.actions) && project.actions.length > 0 && (
-                <div className="p-4">
-                  <h3 className="font-medium text-gray-900 mb-2 text-sm">Assistant Actions</h3>
-                  <div className="space-y-2">
-                    {project.actions.map(action => 
-                      action && action.id ? (
-                        <div key={action.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-gray-900">{action.name}</h4>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              action.state === 0 ? 'bg-gray-100 text-gray-800' : 
-                              action.state === 1 ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
-                              {ActionStateShim[action.state]}
-                            </span>
-                          </div>
-                          <p className="text-gray-700 mt-1 text-sm">{action.description}</p>
-                          {action.type == 2 && <Link target="_blank" to={action.meta?.urlLink} className="text-green-700 mt-1 text-sm">See Cart Link</Link>}
-                        </div>
-                      ) : null
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
           
