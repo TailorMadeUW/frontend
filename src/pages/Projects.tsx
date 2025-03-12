@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { Project, ActionState } from '../types'
+import { Project, ActionState, Event } from '../types'
 import useProjectServerStore from '../stores/projectServerStore'
 import { format } from 'date-fns'
 import { Calendar, Clock, Users, FileText, ArrowLeft, Plus, Pencil, Trash2, X, Check, AlertTriangle } from 'lucide-react'
@@ -19,6 +19,26 @@ interface Appointment {
   description?: string;
   notes?: string;
   location?: string;
+}
+
+// Enhanced Event interface to accommodate data from different sources
+interface EnhancedEvent extends Event {
+  date?: string | Date;
+  duration?: number;
+  data?: {
+    date?: string | Date;
+    eventDate?: string | Date;
+    duration?: number;
+    description?: string;
+    employee?: string;
+    notes?: string;
+    location?: string;
+    client?: {
+      name?: string;
+    };
+    appointmentCreated?: boolean;
+    createdEventId?: string;
+  };
 }
 
 // Initial empty project template
@@ -257,19 +277,43 @@ const Projects: React.FC = () => {
   }
 
   // Handle click on an appointment card
-  const handleAppointmentClick = (appointment: any) => {
+  const handleAppointmentClick = (appointment: EnhancedEvent) => {
     try {
+      // Enhanced date handling for appointment data
+      const getAppointmentDate = (appt: EnhancedEvent) => {
+        if (appt.start) return new Date(appt.start);
+        if (appt.date) return new Date(appt.date);
+        if (appt.data?.date) return new Date(appt.data.date);
+        if (appt.data?.eventDate) return new Date(appt.data.eventDate);
+        
+        console.error("No valid date found in appointment:", appt);
+        return new Date();
+      };
+      
+      const getDuration = (appt: EnhancedEvent, startDate: Date) => {
+        if (appt.duration) return appt.duration;
+        if (appt.data?.duration) return appt.data.duration;
+        if (appt.end) return Math.round((new Date(appt.end).getTime() - startDate.getTime()) / 60000);
+        return 30; // Default to 30 minutes
+      };
+      
+      const startDate = getAppointmentDate(appointment);
+      const duration = getDuration(appointment, startDate);
+      
+      // Log the appointment for debugging
+      console.debug("Clicked appointment:", appointment, "Start date:", startDate, "Duration:", duration);
+      
       // Convert Event to Appointment format
       const appointmentData: Appointment = {
         id: appointment.id,
         projectId: projectId,
-        date: appointment.start,
-        clientName: appointment.client?.name,
-        tailor: appointment.employee,
-        duration: Math.round(((appointment.end?.getTime() || 0) - (appointment.start?.getTime() || 0)) / 60000),
-        description: appointment.description,
-        notes: appointment.notes,
-        location: appointment.location
+        date: startDate,
+        clientName: appointment.client?.name || appointment.data?.client?.name,
+        tailor: appointment.employee || appointment.data?.employee,
+        duration: duration,
+        description: appointment.description || appointment.data?.description,
+        notes: appointment.notes || appointment.data?.notes,
+        location: appointment.location || appointment.data?.location
       };
       
       setSelectedAppointment(appointmentData);
@@ -342,7 +386,7 @@ const Projects: React.FC = () => {
   // Project form component
   const ProjectForm = ({ isCreate = false }: { isCreate?: boolean }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh]">
         <div className="p-6 border-b flex justify-between items-center">
           <h2 className="text-xl font-bold">{isCreate ? 'Create New Project' : 'Edit Project'}</h2>
           <button 
@@ -636,94 +680,96 @@ const Projects: React.FC = () => {
     try {
       return (
         <PageLayout title={project.name || "Project Details"}>
-          <div className="p-6 flex-1">
-            <Link to="/app/projects" className="flex items-center text-blue-500 mb-4">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Projects
-            </Link>
-            
-            <div className="flex justify-end space-x-2 mb-4">
-              <button 
-                onClick={() => setShowEditForm(true)}
-                className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 flex items-center"
-              >
-                <Pencil className="h-4 w-4 mr-1" />
-                Edit
-              </button>
-              <button 
-                onClick={() => setShowDeleteConfirm(true)}
-                className="px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 flex items-center"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete
-              </button>
+          <div className="flex-1 flex flex-col">
+            <div className="p-3">
+              <Link to="/app/projects" className="flex items-center text-blue-500 mb-2">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back to Projects
+              </Link>
+              
+              <div className="flex justify-end space-x-2 mb-2">
+                <button 
+                  onClick={() => setShowEditForm(true)}
+                  className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 flex items-center text-sm"
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </button>
+                <button 
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="px-3 py-1.5 bg-red-50 text-red-700 rounded-md hover:bg-red-100 flex items-center text-sm"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                  Delete
+                </button>
+              </div>
             </div>
             
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white shadow-sm border-t border-b border-gray-200 overflow-hidden flex-1">
               {/* Project Header */}
-              <div className="border-b p-6">
-                <h2 className="text-xl font-bold text-gray-900">{project?.name || "Untitled Project"}</h2>
-                <p className="text-gray-600 mt-1">{project?.description || "No description"}</p>
+              <div className="border-b p-4">
+                <h2 className="text-lg font-bold text-gray-900">{project?.name || "Untitled Project"}</h2>
+                <p className="text-gray-600 mt-1 text-sm">{project?.description || "No description"}</p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
                   <div className="flex items-center">
-                    <Users className="h-5 w-5 text-gray-400 mr-2" />
+                    <Users className="h-4 w-4 text-gray-400 mr-2" />
                     <div>
-                      <p className="text-sm text-gray-500">Client</p>
-                      <p className="font-medium">{project?.clientName || "No client"}</p>
+                      <p className="text-xs text-gray-500">Client</p>
+                      <p className="text-sm">{project?.clientName || "No client"}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center">
-                    <Calendar className="h-5 w-5 text-gray-400 mr-2" />
+                    <Calendar className="h-4 w-4 text-gray-400 mr-2" />
                     <div>
-                      <p className="text-sm text-gray-500">Due Date</p>
-                      <p className="font-medium">
+                      <p className="text-xs text-gray-500">Due Date</p>
+                      <p className="text-sm">
                         {project?.dueDate ? format(new Date(project.dueDate), 'MMM d, yyyy') : "No date"}
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-center">
-                    <FileText className="h-5 w-5 text-gray-400 mr-2" />
+                    <FileText className="h-4 w-4 text-gray-400 mr-2" />
                     <div>
-                      <p className="text-sm text-gray-500">Appointments</p>
-                      <p className="font-medium">{project?.appointmentsNeeded || 0} needed</p>
+                      <p className="text-xs text-gray-500">Appointments</p>
+                      <p className="text-sm">{project?.appointmentsNeeded || 0} needed</p>
                     </div>
                   </div>
                 </div>
               </div>
               
               {/* Measurements & Inventory */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border-b">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-b">
                 {project?.measurements && (
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-2">Measurements</h3>
-                    <p className="text-gray-700 text-sm whitespace-pre-line">{project.measurements}</p>
+                    <h3 className="font-medium text-gray-900 mb-1 text-sm">Measurements</h3>
+                    <p className="text-gray-700 text-xs whitespace-pre-line">{project.measurements}</p>
                   </div>
                 )}
                 
                 {project?.inventoryNeeded && (
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-2">Inventory Needed</h3>
-                    <p className="text-gray-700 text-sm whitespace-pre-line">{project.inventoryNeeded}</p>
+                    <h3 className="font-medium text-gray-900 mb-1 text-sm">Inventory Needed</h3>
+                    <p className="text-gray-700 text-xs whitespace-pre-line">{project.inventoryNeeded}</p>
                   </div>
                 )}
               </div>
               
               {/* Appointments */}
               {project?.appointments && Array.isArray(project.appointments) && project.appointments.length > 0 && (
-                <div className="p-6 border-b">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-medium text-gray-900">Appointments</h3>
+                <div className="p-4 border-b">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium text-gray-900 text-sm">Appointments</h3>
                     <Link 
                       to="/app/calendar" 
-                      className="text-sm text-blue-600 hover:text-blue-800"
+                      className="text-xs text-blue-600 hover:text-blue-800"
                     >
                       View in Calendar
                     </Link>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {project.appointments.map((appointment) => {
                       try {
                         // Safely handle potential undefined properties
@@ -738,29 +784,54 @@ const Projects: React.FC = () => {
                           return null;
                         }
                         
-                        const startDate = appointment.start ? new Date(appointment.start) : new Date();
-                        const endDate = appointment.end ? new Date(appointment.end) : new Date(startDate.getTime() + 30 * 60000);
+                        // Cast to our enhanced type for proper type checking
+                        const enhancedAppointment = appointment as EnhancedEvent;
+                        
+                        // Enhanced date handling - check for multiple possible date properties
+                        // This handles both traditional calendar events and chat-created appointments
+                        const getAppointmentDate = (appt: EnhancedEvent) => {
+                          // Log the appointment to debug
+                          console.debug("Processing appointment:", appt);
+                          
+                          if (appt.start) return new Date(appt.start);
+                          if (appt.date) return new Date(appt.date);
+                          if (appt.data?.date) return new Date(appt.data.date);
+                          if (appt.data?.eventDate) return new Date(appt.data.eventDate);
+                          
+                          // If no date is found, log an error and return today's date
+                          console.error("No valid date found in appointment:", appt);
+                          return new Date();
+                        };
+                        
+                        const startDate = getAppointmentDate(enhancedAppointment);
+                        const endDate = enhancedAppointment.end 
+                          ? new Date(enhancedAppointment.end) 
+                          : enhancedAppointment.duration 
+                            ? new Date(startDate.getTime() + (enhancedAppointment.duration * 60000))
+                            : enhancedAppointment.data?.duration
+                              ? new Date(startDate.getTime() + (enhancedAppointment.data.duration * 60000))
+                              : new Date(startDate.getTime() + 30 * 60000);
                         
                         return (
                           <div 
-                            key={appointment.id} 
-                            className="flex items-start p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => handleAppointmentClick(appointment)}
+                            key={enhancedAppointment.id} 
+                            className="flex items-start p-2 bg-gray-50 rounded-md border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => handleAppointmentClick(enhancedAppointment)}
                           >
-                            <div className="flex-shrink-0 bg-blue-100 rounded-lg p-3 mr-3">
-                              <Calendar className="h-6 w-6 text-blue-600" />
+                            <div className="flex-shrink-0 bg-blue-100 rounded-md p-0 mr-2">
+                              <Calendar className="h-4 w-4 text-blue-600" />
                             </div>
                             <div className="flex-1">
                               <div className="flex justify-between">
-                                <h4 className="font-medium text-gray-900">{format(startDate, 'EEEE, MMMM d, yyyy')}</h4>
-                                <div className="flex items-center text-gray-600">
-                                  <Clock className="h-4 w-4 mr-1" />
+                                <h4 className="font-medium text-gray-900 text-sm">{format(startDate, 'EEEE, MMMM d, yyyy')}</h4>
+                                <div className="flex items-center text-gray-600 text-xs">
+                                  <Clock className="h-3 w-3 mr-1" />
                                   <span>{format(startDate, 'h:mm a')}</span>
                                 </div>
                               </div>
-                              <p className="text-gray-700 mt-1">{appointment.description || "No description"}</p>
-                              <div className="mt-2 flex justify-between text-sm">
-                                <span className="text-gray-500">Tailor: {appointment.employee || "Not assigned"}</span>
+                              <p className="text-gray-700 mt-0.5 text-xs">{enhancedAppointment.description || enhancedAppointment.data?.description || "No description"}</p>
+                              <div className="mt-1 flex justify-between text-xs">
+                                <span className="text-gray-500">Tailor: {enhancedAppointment.employee || enhancedAppointment.data?.employee || "Not assigned"}</span>
                                 <span className="text-gray-500">
                                   Duration: {Math.round((endDate.getTime() - startDate.getTime()) / 60000) || 0} min
                                 </span>
@@ -779,15 +850,15 @@ const Projects: React.FC = () => {
               
               {/* Actions */}
               {project?.actions && Array.isArray(project.actions) && project.actions.length > 0 && (
-                <div className="p-6">
-                  <h3 className="font-medium text-gray-900 mb-3">Actions</h3>
+                <div className="p-4">
+                  <h3 className="font-medium text-gray-900 mb-2 text-sm">Actions</h3>
                   <div className="space-y-2">
                     {project.actions.map(action => 
                       action && action.id ? (
-                        <div key={action.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div key={action.id} className="p-2 bg-gray-50 rounded-md border border-gray-200">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-gray-900">{action.name || "Unnamed Action"}</h4>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
+                            <h4 className="font-medium text-gray-900 text-sm">{action.name || "Unnamed Action"}</h4>
+                            <span className={`px-2 py-0.5 text-xs rounded-full ${
                               action.state === ActionState.Todo ? 'bg-gray-100 text-gray-800' : 
                               action.state === ActionState.InProgress ? 'bg-yellow-100 text-yellow-800' :
                               'bg-green-100 text-green-800'
@@ -796,7 +867,7 @@ const Projects: React.FC = () => {
                                action.state === ActionState.InProgress ? 'In Progress' : 'Done'}
                             </span>
                           </div>
-                          <p className="text-gray-700 mt-1 text-sm">{action.description || "No description"}</p>
+                          <p className="text-gray-700 mt-0.5 text-xs">{action.description || "No description"}</p>
                         </div>
                       ) : null
                     )}
@@ -814,26 +885,85 @@ const Projects: React.FC = () => {
           
           {/* Appointment detail dialog - now with viewInCalendar prop */}
           {selectedAppointment && project && (
-            <EventViewDialog
-              isOpen={isAppointmentDialogOpen}
-              onClose={() => setIsAppointmentDialogOpen(false)}
-              onEdit={handleEditAppointment}
-              onDelete={handleDeleteAppointment}
-              onViewInCalendar={handleViewInCalendar}
-              event={{
-                id: selectedAppointment.id,
-                title: `Appointment for ${project.name}`,
-                description: selectedAppointment.description || '',
-                start: new Date(selectedAppointment.date),
-                end: new Date(new Date(selectedAppointment.date).getTime() + (selectedAppointment.duration || 30) * 60000),
-                calendarId: 'appointments',
-                state: 'busy',
-                location: selectedAppointment.location || '',
-                employee: selectedAppointment.tailor || '',
-                client: { name: project.clientName },
-                notes: selectedAppointment.notes || ''
-              }}
-            />
+            <>
+              {/* Debug information */}
+              {import.meta.env.DEV && (
+                <div className="hidden">
+                  {/* Debug info: Selected Appointment - see console for details */}
+                  <pre>{JSON.stringify(selectedAppointment, null, 2)}</pre>
+                </div>
+              )}
+              <EventViewDialog
+                isOpen={isAppointmentDialogOpen}
+                onClose={() => setIsAppointmentDialogOpen(false)}
+                onEdit={handleEditAppointment}
+                onDelete={handleDeleteAppointment}
+                onViewInCalendar={handleViewInCalendar}
+                event={{
+                  id: selectedAppointment.id,
+                  title: `Appointment for ${project.name}`,
+                  description: selectedAppointment.description || '',
+                  start: (() => { 
+                    // Convert date to a proper Date object, handling various formats
+                    // This ensures we don't have issues with string dates or invalid dates
+                    let date: Date;
+                    
+                    try {
+                      // If it's already a Date object, use it
+                      if (selectedAppointment.date instanceof Date) {
+                        date = selectedAppointment.date;
+                      } else {
+                        // Try to parse the string date
+                        date = new Date(selectedAppointment.date);
+                        
+                        // Check if the date is valid
+                        if (isNaN(date.getTime())) {
+                          console.error("Invalid date detected:", selectedAppointment.date);
+                          date = new Date(); // Fallback to current date if invalid
+                        }
+                      }
+                    } catch (error) {
+                      console.error("Error parsing date:", error);
+                      date = new Date(); // Fallback to current date if error
+                    }
+                    
+                    console.debug("EventViewDialog date conversion:", {
+                      originalDate: selectedAppointment.date,
+                      convertedDate: date,
+                      isoString: date.toISOString(),
+                      localeDateString: date.toLocaleDateString()
+                    });
+                    
+                    return date;
+                  })(),
+                  end: (() => {
+                    // Similar safe conversion for end date
+                    let startDate: Date;
+                    
+                    try {
+                      if (selectedAppointment.date instanceof Date) {
+                        startDate = selectedAppointment.date;
+                      } else {
+                        startDate = new Date(selectedAppointment.date);
+                        if (isNaN(startDate.getTime())) {
+                          startDate = new Date();
+                        }
+                      }
+                    } catch (error) {
+                      startDate = new Date();
+                    }
+                    
+                    return new Date(startDate.getTime() + (selectedAppointment.duration || 30) * 60000);
+                  })(),
+                  calendarId: 'appointments',
+                  state: 'busy',
+                  location: selectedAppointment.location || '',
+                  employee: selectedAppointment.tailor || '',
+                  client: { name: project.clientName },
+                  notes: selectedAppointment.notes || ''
+                }}
+              />
+            </>
           )}
         </PageLayout>
       )
